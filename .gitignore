@@ -1,0 +1,5 @@
+# Editor/IDE related
+.vscode/
+
+# CMake related
+build/
