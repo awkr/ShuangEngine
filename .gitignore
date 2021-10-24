@@ -1,5 +1,7 @@
 # Editor/IDE related
 .vscode/
+.idea/
 
 # CMake related
 build/
+cmake-build-debug/

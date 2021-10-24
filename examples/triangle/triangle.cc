@@ -1,26 +1,22 @@
-#include <VulkanExampleBase.h>
+#include <memory>
 
-class VulkanExample : public VulkanExampleBase {
+#include <Application.h>
+
+class Example : public Application {
 public:
-  VulkanExample() : VulkanExampleBase() {}
-  ~VulkanExample() {}
-
-  void init() {
-    initWindow();
-    initVulkan();
+  Example() : Application() {
+    mTitle = "Example: Basic triangle";
+    // Setup camera
+    mCamera.setPosition(glm::vec3(0, 0, -2.5f));
+    mCamera.setPerspective(60.0f, (float)mWidth / (float)mHeight, 1.0f, 256.0f);
+    // Values not set here are initialized in the base class constructor
   }
-  void prepare() {}
-  void mainLoop() {}
 
-private:
-  void initWindow() {}
-  void initVulkan() {}
+  ~Example() override { logInfo(__func__); }
 };
 
 int main() {
-  VulkanExample *example = new VulkanExample();
-  example->init();
-  example->prepare();
+  auto example = std::make_unique<Example>();
+  example->setup();
   example->mainLoop();
-  delete example;
 }
