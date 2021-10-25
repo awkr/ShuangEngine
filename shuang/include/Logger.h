@@ -2,7 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
-#define logDebug(...) spdlog::debug(__VA_ARGS__);
-#define logInfo(...) spdlog::info(__VA_ARGS__);
-#define logWarn(...) spdlog::warn(__VA_ARGS__);
-#define logError(...) spdlog::error(__VA_ARGS__);
+#define log_debug(...) spdlog::debug(__VA_ARGS__)
+#define log_info(...) spdlog::info(__VA_ARGS__)
+#define log_warn(...) spdlog::warn(__VA_ARGS__)
+#define log_error(...) spdlog::error(__VA_ARGS__)
+#define log_func spdlog::debug(__func__)

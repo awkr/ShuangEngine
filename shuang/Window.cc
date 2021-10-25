@@ -11,7 +11,7 @@
 namespace {
 
 void errorCallback(int error, const char *description) {
-  logError("GLFW error: code {}: {}", error, description);
+  log_error("GLFW error: code {}: {}", error, description);
 }
 
 void windowCloseCallback(GLFWwindow *window) {
@@ -89,7 +89,7 @@ Window::Window(const Application *application, uint32_t width, uint32_t height,
 }
 
 Window::~Window() {
-  logInfo(__func__);
+  log_func;
   glfwTerminate();
 }
 

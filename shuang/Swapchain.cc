@@ -2,9 +2,11 @@
 #include "Device.h"
 #include "Logger.h"
 #include "Macros.h"
+#include "RenderPass.h"
 #include "Surface.h"
 
-Swapchain::Swapchain(const Device *device, const Surface *surface)
+Swapchain::Swapchain(const std::shared_ptr<Device>  &device,
+                     const std::shared_ptr<Surface> &surface)
     : mDevice{device} {
   VkSurfaceCapabilitiesKHR capabilities;
   ASSERT(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
@@ -158,7 +160,7 @@ Swapchain::Swapchain(const Device *device, const Surface *surface)
 }
 
 Swapchain::~Swapchain() {
-  logInfo(__func__);
+  log_func;
 
   for (auto &semaphore : mSemaphorePool) {
     vkDestroySemaphore(mDevice->getHandle(), semaphore, nullptr);
@@ -176,6 +178,8 @@ Swapchain::~Swapchain() {
     vkDestroyFence(mDevice->getHandle(), frameClip.queueSubmittedFence,
                    nullptr);
   }
+
+  cleanupFramebuffers();
 
   for (size_t i = 0; i < mImageCount; i++) {
     vkDestroyImageView(mDevice->getHandle(), mImageViews[i], nullptr);
@@ -208,6 +212,36 @@ void Swapchain::initFrameClip(FrameClip &frameClip) {
                                   &frameClip.primaryCommandBuffer));
 }
 
+void Swapchain::createFramebuffers(
+    const std::shared_ptr<RenderPass> &renderPass) {
+  for (const auto &imageView : mImageViews) {
+    // Build the framebuffer.
+    VkFramebufferCreateInfo framebufferCreateInfo{
+        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+    framebufferCreateInfo.renderPass      = renderPass->getHandle();
+    framebufferCreateInfo.attachmentCount = 1;
+    framebufferCreateInfo.pAttachments    = &imageView;
+    framebufferCreateInfo.width           = mImageExtent.width;
+    framebufferCreateInfo.height          = mImageExtent.height;
+    framebufferCreateInfo.layers          = 1;
+
+    VkFramebuffer framebuffer;
+    ASSERT(vkCreateFramebuffer(mDevice->getHandle(), &framebufferCreateInfo,
+                               nullptr, &framebuffer));
+    mFramebuffers.push_back(framebuffer);
+  }
+}
+
+void Swapchain::cleanupFramebuffers() {
+  vkQueueWaitIdle(mDevice->getGraphicsQueue());
+
+  for (auto &framebuffer : mFramebuffers) {
+    vkDestroyFramebuffer(mDevice->getHandle(), framebuffer, nullptr);
+  }
+
+  mFramebuffers.clear();
+}
+
 VkResult Swapchain::acquireNextImage(uint32_t &imageIndex) {
   VkSemaphore semaphore;
   if (mSemaphorePool.empty()) {
@@ -227,6 +261,8 @@ VkResult Swapchain::acquireNextImage(uint32_t &imageIndex) {
     return result;
   }
 
+  auto &frameClip = mFrameClips[imageIndex];
+
   // If we have outstanding fence for this swapchain imageIndex, wait for it
   // to complete first. After begin frame returns, it is safe to reuse or delete
   // resources which were used previously.
@@ -235,24 +271,22 @@ VkResult Swapchain::acquireNextImage(uint32_t &imageIndex) {
   // waiting for all GPU work to complete before this returns.
   // Normally, this doesn't really block at all, since we're waiting for old
   // frames to have been completed, but just in case.
-  if (auto &fence = mFrameClips[imageIndex].queueSubmittedFence;
-      fence != VK_NULL_HANDLE) {
-    vkWaitForFences(mDevice->getHandle(), 1, &fence, true, UINT64_MAX);
-    vkResetFences(mDevice->getHandle(), 1, &fence);
+  if (frameClip.queueSubmittedFence != VK_NULL_HANDLE) {
+    vkWaitForFences(mDevice->getHandle(), 1, &frameClip.queueSubmittedFence,
+                    true, UINT64_MAX);
+    vkResetFences(mDevice->getHandle(), 1, &frameClip.queueSubmittedFence);
   }
 
-  if (auto &pool = mFrameClips[imageIndex].primaryCommandPool;
-      pool != VK_NULL_HANDLE) {
-    vkResetCommandPool(mDevice->getHandle(), pool, 0);
+  if (frameClip.primaryCommandPool != VK_NULL_HANDLE) {
+    vkResetCommandPool(mDevice->getHandle(), frameClip.primaryCommandPool, 0);
   }
 
   // Recycle the old semaphore back into the semaphore pool.
-  if (auto &oldSemaphore = mFrameClips[imageIndex].acquiredSemaphore;
-      oldSemaphore != VK_NULL_HANDLE) {
-    mSemaphorePool.push_back(oldSemaphore);
+  if (frameClip.acquiredSemaphore != VK_NULL_HANDLE) {
+    mSemaphorePool.push_back(frameClip.acquiredSemaphore);
   }
 
-  mFrameClips[imageIndex].acquiredSemaphore = semaphore;
+  frameClip.acquiredSemaphore = semaphore;
 
   return VK_SUCCESS;
 }

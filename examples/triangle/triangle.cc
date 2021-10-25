@@ -12,7 +12,7 @@ public:
     // Values not set here are initialized in the base class constructor
   }
 
-  ~Example() override { logInfo(__func__); }
+  ~Example() override { log_debug(__func__); }
 };
 
 int main() {

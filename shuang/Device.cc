@@ -5,7 +5,8 @@
 
 #include <vulkan/vulkan_beta.h>
 
-Device::Device(const PhysicalDevice *physicalDevice, const Surface *surface)
+Device::Device(const std::shared_ptr<PhysicalDevice> &physicalDevice,
+               const std::shared_ptr<Surface>        &surface)
     : mPhysicalDevice{physicalDevice} {
   // Store properties, features and memory properties of the
   // physical device
@@ -35,9 +36,9 @@ Device::Device(const PhysicalDevice *physicalDevice, const Surface *surface)
     ASSERT(vkEnumerateDeviceExtensionProperties(physicalDevice->getHandle(),
                                                 nullptr, &extensionCount,
                                                 extensions.data()));
-    //    logInfo("Supported device extensions: {}", extensionCount);
+    //    log_info("Supported device extensions: {}", extensionCount);
     for (const auto &extension : extensions) {
-      //      logInfo("  {}", extension.extensionName);
+      //      log_info("  {}", extension.extensionName);
       mSupportedExtensions.emplace_back(extension.extensionName);
     }
   }
@@ -98,14 +99,14 @@ Device::Device(const PhysicalDevice *physicalDevice, const Surface *surface)
   deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
   ASSERT(vkCreateDevice(physicalDevice->getHandle(), &deviceCreateInfo, nullptr,
-                        &mDevice));
+                        &mHandle));
 
-  vkGetDeviceQueue(mDevice, mQueueFamilyIndices.graphics, 0, &mGraphicsQueue);
+  vkGetDeviceQueue(mHandle, mQueueFamilyIndices.graphics, 0, &mGraphicsQueue);
 }
 
 Device::~Device() {
-  logInfo(__func__);
-  vkDestroyDevice(mDevice, nullptr);
+  log_func;
+  vkDestroyDevice(mHandle, nullptr);
 }
 
 bool Device::isExtensionSupported(const std::string &extension) {

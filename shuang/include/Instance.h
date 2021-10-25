@@ -4,14 +4,20 @@
 
 class Instance {
 public:
-  explicit Instance(const char *applicationName, bool enableValidation = true);
+  Instance(const char                      *applicationName,
+           const std::vector<const char *> &requiredExtensions = {},
+           bool                             enableValidation   = true);
   ~Instance();
 
   const VkInstance &getHandle() const { return mHandle; }
 
 private:
-  std::vector<std::string>  mSupportedInstanceExtensions;
-  std::vector<const char *> mRequestedInstanceExtensions;
-  VkInstance                mHandle;
-  bool                      mEnableValidation;
+  bool        isExtensionSupport(const char *extension);
+  bool        isLayerSupport(const char *name);
+  static bool equals(const char *a, const char *b);
+
+  bool                           mEnableValidation;
+  std::vector<std::string>       mSupportedExtensions;
+  std::vector<VkLayerProperties> mSupportedLayers;
+  VkInstance                     mHandle;
 };

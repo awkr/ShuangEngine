@@ -14,26 +14,30 @@ public:
     uint32_t transfer;
   };
 
-  Device(const PhysicalDevice *physicalDevice, const Surface *surface);
+  Device(const std::shared_ptr<PhysicalDevice> &physicalDevice,
+         const std::shared_ptr<Surface>        &surface);
   ~Device();
 
-  const VkDevice       &getHandle() const { return mDevice; }
-  const PhysicalDevice *getPhysicalDevice() const { return mPhysicalDevice; }
+  const VkDevice                        &getHandle() const { return mHandle; }
+  const std::shared_ptr<PhysicalDevice> &getPhysicalDevice() const {
+    return mPhysicalDevice;
+  }
   const QueueFamilyIndices &getQueueFamilyIndices() const {
     return mQueueFamilyIndices;
   }
   const VkQueue &getGraphicsQueue() const { return mGraphicsQueue; }
+  VkResult       waitIdle() const { return vkDeviceWaitIdle(mHandle); }
 
 private:
   bool isExtensionSupported(const std::string &extension);
 
-  const PhysicalDevice                *mPhysicalDevice;
-  VkPhysicalDeviceProperties           mPhysicalDeviceProperties;
-  VkPhysicalDeviceFeatures             mPhysicalDeviceFeatures;
-  VkPhysicalDeviceMemoryProperties     mPhysicalDeviceMemoryProperties;
-  std::vector<VkQueueFamilyProperties> mQueueFamilyProperties;
-  std::vector<std::string>             mSupportedExtensions;
-  QueueFamilyIndices                   mQueueFamilyIndices;
-  VkDevice                             mDevice;
-  VkQueue                              mGraphicsQueue;
+  const std::shared_ptr<PhysicalDevice> &mPhysicalDevice = nullptr;
+  VkPhysicalDeviceProperties             mPhysicalDeviceProperties;
+  VkPhysicalDeviceFeatures               mPhysicalDeviceFeatures;
+  VkPhysicalDeviceMemoryProperties       mPhysicalDeviceMemoryProperties;
+  std::vector<VkQueueFamilyProperties>   mQueueFamilyProperties;
+  std::vector<std::string>               mSupportedExtensions;
+  QueueFamilyIndices                     mQueueFamilyIndices;
+  VkDevice                               mHandle;
+  VkQueue                                mGraphicsQueue;
 };

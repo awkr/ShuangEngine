@@ -1,19 +1,11 @@
 #include "Application.h"
 #include "Macros.h"
 
-Application::Application() {}
+#include <spdlog/spdlog.h>
 
-Application::~Application() {
-  logInfo(__func__);
+Application::Application() { spdlog::set_level(spdlog::level::debug); }
 
-  cleanupFramebuffers();
-  delete mPipeline;
-  delete mRenderPass;
-  delete mSwapchain;
-  delete mSurface;
-  delete mDevice;
-  delete mInstance;
-}
+Application::~Application() { log_func; }
 
 void Application::handleEvent(const InputEvent &inputEvent) {
   if (inputEvent.getSource() == InputEventSource::KEYBOARD) {
@@ -35,14 +27,11 @@ void Application::resize(const int width, const int height) {
     return;
   }
 
-  vkDeviceWaitIdle(mDevice->getHandle());
+  mDevice->waitIdle();
 
-  cleanupFramebuffers();
-
-  delete mSwapchain;
-  mSwapchain = new Swapchain(mDevice, mSurface);
-
-  createFramebuffers();
+  mSwapchain.reset();
+  mSwapchain = std::make_shared<Swapchain>(mDevice, mSurface);
+  mSwapchain->createFramebuffers(mRenderPass);
 }
 
 void Application::mainLoop() {
@@ -50,20 +39,23 @@ void Application::mainLoop() {
     update();
     mWindow->pollEvents();
   }
-  vkDeviceWaitIdle(mDevice->getHandle());
+  mDevice->waitIdle();
 }
 
 bool Application::setup(bool enableValidation) {
-  mInstance = new Instance(mTitle.c_str(), enableValidation);
-  mWindow   = std::make_unique<Window>(this, mWidth, mHeight, mTitle.c_str());
-  mSurface  = new Surface(mInstance, mWindow);
-  mPhysicalDevice = new PhysicalDevice(mInstance);
-  mDevice         = new Device(mPhysicalDevice, mSurface);
-  mSwapchain      = new Swapchain(mDevice, mSurface);
-  mRenderPass     = new RenderPass(mDevice, mSwapchain->getImageFormat());
-  mPipeline       = new Pipeline(mDevice, mRenderPass);
+  const std::vector<const char *> extensions{};
+  mInstance =
+      std::make_shared<Instance>(mTitle.c_str(), extensions, enableValidation);
+  mWindow  = std::make_unique<Window>(this, mWidth, mHeight, mTitle.c_str());
+  mSurface = std::make_shared<Surface>(mInstance, mWindow);
+  mPhysicalDevice = std::make_shared<PhysicalDevice>(mInstance);
+  mDevice         = std::make_shared<Device>(mPhysicalDevice, mSurface);
+  mSwapchain      = std::make_shared<Swapchain>(mDevice, mSurface);
+  mRenderPass =
+      std::make_shared<RenderPass>(mDevice, mSwapchain->getImageFormat());
+  mPipeline = std::make_shared<Pipeline>(mDevice, mRenderPass);
 
-  createFramebuffers();
+  mSwapchain->createFramebuffers(mRenderPass);
 
   return true;
 }
@@ -91,7 +83,7 @@ VkResult Application::render(const uint32_t imageIndex) {
   auto &frameClip = mSwapchain->getFrameClips()[imageIndex];
 
   // Render to this framebuffer.
-  auto framebuffer = mFramebuffers[imageIndex];
+  auto &framebuffer = mSwapchain->getFramebuffers()[imageIndex];
 
   // Allocate or re-use a primary command buffer.
   auto commandBuffer = frameClip.primaryCommandBuffer;
@@ -131,11 +123,12 @@ VkResult Application::render(const uint32_t imageIndex) {
   viewport.height   = static_cast<float>(mSwapchain->getImageExtent().height);
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
+  // Set viewport dynamically
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
   VkRect2D scissor{};
-  scissor.extent.width  = mSwapchain->getImageExtent().width;
-  scissor.extent.height = mSwapchain->getImageExtent().height;
+  scissor.extent = mSwapchain->getImageExtent();
+  // Set scissor dynamically
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
   // Draw three vertices with one instance.
@@ -181,34 +174,4 @@ VkResult Application::present(const uint32_t imageIndex) {
   presentInfo.pWaitSemaphores    = &frameClip.releasedSemaphore;
   // Present swapchain imageIndex
   return vkQueuePresentKHR(mDevice->getGraphicsQueue(), &presentInfo);
-}
-
-// Create framebuffer for each swapchain image view
-void Application::createFramebuffers() {
-  for (const auto &imageView : mSwapchain->getImageViews()) {
-    // Build the framebuffer.
-    VkFramebufferCreateInfo framebufferCreateInfo{
-        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-    framebufferCreateInfo.renderPass      = mRenderPass->getHandle();
-    framebufferCreateInfo.attachmentCount = 1;
-    framebufferCreateInfo.pAttachments    = &imageView;
-    framebufferCreateInfo.width           = mSwapchain->getImageExtent().width;
-    framebufferCreateInfo.height          = mSwapchain->getImageExtent().height;
-    framebufferCreateInfo.layers          = 1;
-
-    VkFramebuffer framebuffer;
-    ASSERT(vkCreateFramebuffer(mDevice->getHandle(), &framebufferCreateInfo,
-                               nullptr, &framebuffer));
-    mFramebuffers.push_back(framebuffer);
-  }
-}
-
-void Application::cleanupFramebuffers() {
-  vkQueueWaitIdle(mDevice->getGraphicsQueue());
-
-  for (auto &framebuffer : mFramebuffers) {
-    vkDestroyFramebuffer(mDevice->getHandle(), framebuffer, nullptr);
-  }
-
-  mFramebuffers.clear();
 }

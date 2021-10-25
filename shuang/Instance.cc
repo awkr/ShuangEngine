@@ -5,7 +5,9 @@
 
 #include <vulkan/vulkan_metal.h>
 
-Instance::Instance(const char *applicationName, bool enableValidation)
+Instance::Instance(const char                      *applicationName,
+                   const std::vector<const char *> &requiredExtensions,
+                   bool                             enableValidation)
     : mEnableValidation{enableValidation} {
   // Get extensions supported by the instance
   uint32_t extensionCount;
@@ -14,29 +16,27 @@ Instance::Instance(const char *applicationName, bool enableValidation)
     std::vector<VkExtensionProperties> extensions(extensionCount);
     if (vkEnumerateInstanceExtensionProperties(
             nullptr, &extensionCount, extensions.data()) == VK_SUCCESS) {
-      //      logInfo("Supported instance extensions: {}", extensionCount);
+      //      log_info("Supported instance extensions: {}", extensionCount);
       for (const auto &extension : extensions) {
-        //        logInfo("  {}", extension.extensionName);
-        mSupportedInstanceExtensions.emplace_back(extension.extensionName);
+        //        log_info("  {}", extension.extensionName);
+        mSupportedExtensions.emplace_back(extension.extensionName);
       }
     }
   }
 
-  std::vector<const char *> instanceExtensions = {
+  std::vector<const char *> extensions = {
       VK_KHR_SURFACE_EXTENSION_NAME,
       VK_EXT_METAL_SURFACE_EXTENSION_NAME,
   };
-  if (mEnableValidation) {
-    instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+  if (enableValidation) {
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
-  for (const auto &extension : mRequestedInstanceExtensions) {
-    if (std::find(mSupportedInstanceExtensions.begin(),
-                  mSupportedInstanceExtensions.end(),
-                  extension) == mSupportedInstanceExtensions.end()) {
+  for (const auto &extension : requiredExtensions) {
+    if (!isExtensionSupport(extension)) {
       throw std::runtime_error(fmt::format(
           "Requested instance extension not present: {}", extension));
     }
-    instanceExtensions.push_back(extension);
+    extensions.emplace_back(extension);
   }
 
   VkApplicationInfo applicationInfo{};
@@ -50,31 +50,23 @@ Instance::Instance(const char *applicationName, bool enableValidation)
   instanceCreateInfo.pNext            = nullptr;
   instanceCreateInfo.pApplicationInfo = &applicationInfo;
 
-  if (!instanceExtensions.empty()) {
-    instanceCreateInfo.enabledExtensionCount =
-        (uint32_t)instanceExtensions.size();
-    instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
+  if (!extensions.empty()) {
+    instanceCreateInfo.enabledExtensionCount   = (uint32_t)extensions.size();
+    instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
   }
 
-  const char *validationLayerName = "VK_LAYER_KHRONOS_validation";
-  if (mEnableValidation) {
-    uint32_t instanceLayerCount;
-    vkEnumerateInstanceLayerProperties(&instanceLayerCount, nullptr);
-    std::vector<VkLayerProperties> instanceLayerProperties(instanceLayerCount);
-    vkEnumerateInstanceLayerProperties(&instanceLayerCount,
-                                       instanceLayerProperties.data());
-    bool isPresent = false;
-    for (const auto &layer : instanceLayerProperties) {
-      if (strcmp(layer.layerName, validationLayerName) == 0) {
-        isPresent = true;
-        break;
-      }
-    }
-    if (isPresent) {
-      instanceCreateInfo.ppEnabledLayerNames = &validationLayerName;
+  if (enableValidation) {
+    uint32_t layerCount;
+    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+    mSupportedLayers.resize(layerCount);
+    vkEnumerateInstanceLayerProperties(&layerCount, mSupportedLayers.data());
+
+    const char *validationLayer = "VK_LAYER_KHRONOS_validation";
+    if (isLayerSupport(validationLayer)) {
+      instanceCreateInfo.ppEnabledLayerNames = &validationLayer;
       instanceCreateInfo.enabledLayerCount   = 1;
     } else {
-      logError("Layer VK_LAYER_KHRONOS_validation not present");
+      log_error("Layer not present: {}", validationLayer);
     }
   }
 
@@ -89,11 +81,29 @@ Instance::Instance(const char *applicationName, bool enableValidation)
 }
 
 Instance::~Instance() {
-  logInfo(__func__);
+  log_func;
 
   if (mEnableValidation) {
     validation::cleanup(mHandle);
   }
 
   vkDestroyInstance(mHandle, nullptr);
+}
+
+bool Instance::isExtensionSupport(const char *extension) {
+  return std::find(mSupportedExtensions.begin(), mSupportedExtensions.end(),
+                   extension) != mSupportedExtensions.end();
+}
+
+bool Instance::isLayerSupport(const char *name) {
+  for (const auto &layer : mSupportedLayers) {
+    if (equals(name, layer.layerName)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Instance::equals(const char *a, const char *b) {
+  return strcmp(a, b) == 0;
 }

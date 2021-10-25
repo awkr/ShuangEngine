@@ -33,17 +33,12 @@ protected:
   Camera      mCamera;
 
 private:
-  void createFramebuffers();
-  void cleanupFramebuffers();
-
-  std::shared_ptr<Window> mWindow;
-  Instance               *mInstance;
-  PhysicalDevice         *mPhysicalDevice;
-  Device                 *mDevice;
-  Surface                *mSurface;
-  Swapchain              *mSwapchain;
-  RenderPass             *mRenderPass;
-  Pipeline               *mPipeline;
-  // Framebuffers for each swapchain image view
-  std::vector<VkFramebuffer> mFramebuffers;
+  std::shared_ptr<Window>         mWindow         = nullptr;
+  std::shared_ptr<Instance>       mInstance       = nullptr;
+  std::shared_ptr<PhysicalDevice> mPhysicalDevice = nullptr;
+  std::shared_ptr<Surface>        mSurface        = nullptr;
+  std::shared_ptr<Device>         mDevice         = nullptr;
+  std::shared_ptr<Swapchain>      mSwapchain      = nullptr;
+  std::shared_ptr<RenderPass>     mRenderPass     = nullptr;
+  std::shared_ptr<Pipeline>       mPipeline       = nullptr;
 };

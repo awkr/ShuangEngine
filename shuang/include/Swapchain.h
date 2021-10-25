@@ -2,6 +2,7 @@
 
 class Device;
 class Surface;
+class RenderPass;
 
 #include <vulkan/vulkan.hpp>
 
@@ -16,27 +17,33 @@ public:
     VkSemaphore releasedSemaphore = VK_NULL_HANDLE;
   };
 
-  Swapchain(const Device *device, const Surface *surface);
+  Swapchain(const std::shared_ptr<Device>  &device,
+            const std::shared_ptr<Surface> &surface);
   ~Swapchain();
 
   const VkSwapchainKHR &getHandle() const { return mHandle; }
   const VkFormat       &getImageFormat() const { return mImageFormat; }
   const std::vector<VkImageView> &getImageViews() const { return mImageViews; }
-  const VkExtent2D       &getImageExtent() const { return mImageExtent; }
-  std::vector<FrameClip> &getFrameClips() { return mFrameClips; }
+  const VkExtent2D           &getImageExtent() const { return mImageExtent; }
+  std::vector<FrameClip>     &getFrameClips() { return mFrameClips; }
+  std::vector<VkFramebuffer> &getFramebuffers() { return mFramebuffers; }
 
+  void     createFramebuffers(const std::shared_ptr<RenderPass> &renderPass);
   VkResult acquireNextImage(uint32_t &imageIndex);
 
 private:
   void initFrameClip(FrameClip &frameClip);
+  void cleanupFramebuffers();
 
-  const Device            *mDevice;
-  VkExtent2D               mImageExtent;
-  VkFormat                 mImageFormat;
-  VkSwapchainKHR           mHandle;
-  uint32_t                 mImageCount;
-  std::vector<VkImage>     mImages;
-  std::vector<VkImageView> mImageViews;
-  std::vector<FrameClip>   mFrameClips;
-  std::vector<VkSemaphore> mSemaphorePool;
+  const std::shared_ptr<Device> &mDevice = nullptr;
+  VkExtent2D                     mImageExtent;
+  VkFormat                       mImageFormat;
+  VkSwapchainKHR                 mHandle;
+  uint32_t                       mImageCount;
+  std::vector<VkImage>           mImages;
+  std::vector<VkImageView>       mImageViews;
+  std::vector<FrameClip>         mFrameClips;
+  std::vector<VkSemaphore>       mSemaphorePool;
+  // Framebuffers for each image view
+  std::vector<VkFramebuffer> mFramebuffers;
 };

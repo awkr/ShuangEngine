@@ -5,7 +5,8 @@
 #include "Macros.h"
 #include "RenderPass.h"
 
-Pipeline::Pipeline(const Device *device, const RenderPass *renderPass)
+Pipeline::Pipeline(const std::shared_ptr<Device>     &device,
+                   const std::shared_ptr<RenderPass> &renderPass)
     : mDevice{device} {
   // Create a blank pipeline layout.
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{
@@ -108,7 +109,7 @@ Pipeline::Pipeline(const Device *device, const RenderPass *renderPass)
 }
 
 Pipeline::~Pipeline() {
-  logInfo(__func__);
+  log_func;
   vkDestroyPipeline(mDevice->getHandle(), mHandle, nullptr);
   vkDestroyPipelineLayout(mDevice->getHandle(), mPipelineLayout, nullptr);
 }

@@ -43,14 +43,14 @@ messengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
           << "] : " << pCallbackData->pMessage;
 
   if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-    logDebug(message.str());
+    log_debug(message.str());
   } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-    logInfo(message.str());
+    log_info(message.str());
   } else if (messageSeverity &
              VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-    logWarn(message.str());
+    log_warn(message.str());
   } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    logError(message.str());
+    log_error(message.str());
   }
 
   // The return value of this callback controls whether the Vulkan call that

@@ -3,14 +3,14 @@
 #include "Logger.h"
 #include "Window.h"
 
-Surface::Surface(const Instance                *instance,
-                 const std::shared_ptr<Window> &window)
+Surface::Surface(const std::shared_ptr<Instance> &instance,
+                 const std::shared_ptr<Window>   &window)
     : mInstance{instance} {
   mHandle = window->createSurface(instance->getHandle());
   mExtent = window->getExtent();
 }
 
 Surface::~Surface() {
-  logInfo(__func__);
+  log_func;
   vkDestroySurfaceKHR(mInstance->getHandle(), mHandle, nullptr);
 }

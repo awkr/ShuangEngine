@@ -3,7 +3,8 @@
 #include "Logger.h"
 #include "Macros.h"
 
-RenderPass::RenderPass(const Device *device, const VkFormat format)
+RenderPass::RenderPass(const std::shared_ptr<Device> &device,
+                       const VkFormat                 format)
     : mDevice{device} {
   VkAttachmentDescription attachment = {0};
   attachment.format                  = format;
@@ -71,6 +72,6 @@ RenderPass::RenderPass(const Device *device, const VkFormat format)
 }
 
 RenderPass::~RenderPass() {
-  logInfo(__func__);
+  log_func;
   vkDestroyRenderPass(mDevice->getHandle(), mHandle, nullptr);
 }
