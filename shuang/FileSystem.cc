@@ -4,9 +4,7 @@
 
 namespace filesystem {
 
-std::vector<uint8_t> read(const std::string &filename) {
-  return read(filename, 0);
-}
+std::vector<uint8_t> read(const std::string &filename) { return read(filename, 0); }
 
 std::vector<uint8_t> read(const std::string &filename, const uint32_t count) {
   std::vector<uint8_t> data;

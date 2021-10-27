@@ -14,23 +14,18 @@ void errorCallback(int error, const char *description) {
   log_error("GLFW error: code {}: {}", error, description);
 }
 
-void windowCloseCallback(GLFWwindow *window) {
-  glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
+void windowCloseCallback(GLFWwindow *window) { glfwSetWindowShouldClose(window, GLFW_TRUE); }
 
 void windowSizeCallback(GLFWwindow *window, int width, int height) {
-  if (auto application =
-          reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
+  if (auto application = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
     application->resize(width, height);
   }
 }
 
 void windowFocusCallback(GLFWwindow *window, int focused) {}
 
-void keyCallback(GLFWwindow *window, int key, int /* scancode */, int action,
-                 int /* mods */) {
-  auto application =
-      reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
+void keyCallback(GLFWwindow *window, int key, int /* scancode */, int action, int /* mods */) {
+  auto application = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
   if (!application) {
     return;
   }
@@ -54,13 +49,11 @@ void keyCallback(GLFWwindow *window, int key, int /* scancode */, int action,
 
 void cursorPosCallback(GLFWwindow *window, double xPos, double yPos) {}
 
-void mouseButtonCallback(GLFWwindow *window, int button, int action,
-                         int /* mods */) {}
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int /* mods */) {}
 
 } // namespace
 
-Window::Window(const Application *application, uint32_t width, uint32_t height,
-               const char *title) {
+Window::Window(const Application *application, uint32_t width, uint32_t height, const char *title) {
   if (!glfwInit()) {
     throw std::runtime_error("Failed to init GLFW");
   }
@@ -68,14 +61,12 @@ Window::Window(const Application *application, uint32_t width, uint32_t height,
   glfwSetErrorCallback(errorCallback);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-  if (mHandle = glfwCreateWindow(width, height, title, nullptr, nullptr);
-      !mHandle) {
+  if (mHandle = glfwCreateWindow(width, height, title, nullptr, nullptr); !mHandle) {
     throw std::runtime_error("Failed to create GLFW");
   }
 
-  glfwSetWindowUserPointer(
-      mHandle,
-      reinterpret_cast<void *>(const_cast<Application *>(application)));
+  glfwSetWindowUserPointer(mHandle,
+                           reinterpret_cast<void *>(const_cast<Application *>(application)));
 
   glfwSetWindowCloseCallback(mHandle, windowCloseCallback);
   glfwSetWindowSizeCallback(mHandle, windowSizeCallback);
@@ -101,6 +92,6 @@ void Window::pollEvents() { glfwPollEvents(); }
 
 VkSurfaceKHR Window::createSurface(const VkInstance instance) const {
   VkSurfaceKHR surface;
-  ASSERT(glfwCreateWindowSurface(instance, mHandle, nullptr, &surface));
+  vkAssert(glfwCreateWindowSurface(instance, mHandle, nullptr, &surface));
   return surface;
 }

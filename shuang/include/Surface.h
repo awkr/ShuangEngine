@@ -7,8 +7,7 @@ class Window;
 
 class Surface {
 public:
-  Surface(const std::shared_ptr<Instance> &instance,
-          const std::shared_ptr<Window>   &window);
+  Surface(const std::shared_ptr<Instance> &instance, const std::shared_ptr<Window> &window);
   ~Surface();
 
   const VkSurfaceKHR &getHandle() const { return mHandle; }

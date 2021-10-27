@@ -15,39 +15,30 @@ void setup(const VkInstance instance, VkDebugReportFlagsEXT flags,
       vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
 
   VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo{};
-  debugUtilsMessengerCreateInfo.sType =
-      VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-  debugUtilsMessengerCreateInfo.messageSeverity =
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  debugUtilsMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  debugUtilsMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                                  VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
   debugUtilsMessengerCreateInfo.messageType =
-      VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+      VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
   debugUtilsMessengerCreateInfo.pfnUserCallback = messengerCallback;
-  auto result = vkCreateMessengerEXT(instance, &debugUtilsMessengerCreateInfo,
-                                     nullptr, &messenger);
+  auto result = vkCreateMessengerEXT(instance, &debugUtilsMessengerCreateInfo, nullptr, &messenger);
   assert(result == VK_SUCCESS);
 }
 
-void cleanup(const VkInstance instance) {
-  vkDestroyMessengerEXT(instance, messenger, nullptr);
-}
+void cleanup(const VkInstance instance) { vkDestroyMessengerEXT(instance, messenger, nullptr); }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL
 messengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
                   VkDebugUtilsMessageTypeFlagsEXT             messageType,
-                  const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                  void                                       *pUserData) {
+                  const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
   std::stringstream message;
-  message << "[" << pCallbackData->pMessageIdName
-          << "] : " << pCallbackData->pMessage;
+  message << "[" << pCallbackData->pMessageIdName << "] : " << pCallbackData->pMessage;
 
   if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
     log_debug(message.str());
   } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
     log_info(message.str());
-  } else if (messageSeverity &
-             VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+  } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
     log_warn(message.str());
   } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
     log_error(message.str());

@@ -11,9 +11,9 @@ void setup(const VkInstance instance, VkDebugReportFlagsEXT flags,
 
 void cleanup(const VkInstance instance);
 
-VKAPI_ATTR VkBool32 VKAPI_CALL messengerCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT             messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData);
+VKAPI_ATTR VkBool32 VKAPI_CALL
+messengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+                  VkDebugUtilsMessageTypeFlagsEXT             messageType,
+                  const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData);
 
 } // namespace validation

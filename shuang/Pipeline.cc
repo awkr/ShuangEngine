@@ -1,21 +1,50 @@
 #include "Pipeline.h"
+#include "DescriptorSetLayout.h"
 #include "Device.h"
 #include "FileSystem.h"
 #include "Logger.h"
 #include "Macros.h"
 #include "RenderPass.h"
+#include "Vertex.h"
 
-Pipeline::Pipeline(const std::shared_ptr<Device>     &device,
-                   const std::shared_ptr<RenderPass> &renderPass)
+Pipeline::Pipeline(const std::shared_ptr<Device>                           &device,
+                   const std::shared_ptr<RenderPass>                       &renderPass,
+                   const std::vector<std::shared_ptr<DescriptorSetLayout>> &descriptorSetLayouts)
     : mDevice{device} {
-  // Create a blank pipeline layout.
+  // Create a pipeline layout.
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
-  ASSERT(vkCreatePipelineLayout(device->getHandle(), &pipelineLayoutCreateInfo,
-                                nullptr, &mPipelineLayout));
+  //  std::vector<VkDescriptorSetLayout> setLayouts{};
+  //  setLayouts.reserve(descriptorSetLayouts.size());
+  //  for (const auto &descriptorSetLayout : descriptorSetLayouts) {
+  //    setLayouts.push_back(descriptorSetLayout->getHandle());
+  //  }
+  //  pipelineLayoutCreateInfo.pSetLayouts    = setLayouts.data();
+  //  pipelineLayoutCreateInfo.setLayoutCount = setLayouts.size();
+  vkAssert(vkCreatePipelineLayout(mDevice->getHandle(), &pipelineLayoutCreateInfo, nullptr,
+                                  &mPipelineLayout));
+
+  // Vertex binding and attributes
+  // Binding descriptions
+  std::vector<VkVertexInputBindingDescription> vertexInputBindingDescriptions = {
+      createVertexInputBindingDescription(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+  };
+  // Attribute descriptions
+  std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions = {
+      createVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
+                                            offsetof(Vertex, position)),
+      createVertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
+                                            offsetof(Vertex, color)),
+  };
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+  vertexInputStateCreateInfo.pVertexBindingDescriptions = vertexInputBindingDescriptions.data();
+  vertexInputStateCreateInfo.vertexBindingDescriptionCount =
+      static_cast<uint32_t>(vertexInputBindingDescriptions.size());
+  vertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
+  vertexInputStateCreateInfo.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(vertexInputAttributeDescriptions.size());
 
   // Specify we will use triangle lists to draw geometry.
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{
@@ -29,12 +58,10 @@ Pipeline::Pipeline(const std::shared_ptr<Device>     &device,
   rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
   rasterizationStateCreateInfo.lineWidth = 1.0f;
 
-  // Our attachment will write to all color channels, but no blending is
-  // enabled.
+  // Our attachment will write to all color channels, but no blending is enabled.
   VkPipelineColorBlendAttachmentState colorBlendAttachmentState{};
-  colorBlendAttachmentState.colorWriteMask =
-      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-      VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  colorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
   VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
@@ -56,18 +83,16 @@ Pipeline::Pipeline(const std::shared_ptr<Device>     &device,
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
   multisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-  // Specify that these states will be dynamicStateCreateInfo, i.e. not part of
-  // pipeline state object.
-  std::array<VkDynamicState, 2> dynamicStates{VK_DYNAMIC_STATE_VIEWPORT,
-                                              VK_DYNAMIC_STATE_SCISSOR};
+  // Specify that these states will be dynamicStateCreateInfo, i.e. not part of pipeline state
+  // object.
+  std::array<VkDynamicState, 2> dynamicStates{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
   VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
-  dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
-  dynamicStateCreateInfo.dynamicStateCount =
-      static_cast<uint32_t>(dynamicStates.size());
+  dynamicStateCreateInfo.pDynamicStates    = dynamicStates.data();
+  dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 
-  // Load our SPIR-V shaders.
+  // Load SPIR-V shaders.
   std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
 
   // Vertex stage of the pipeline
@@ -82,10 +107,9 @@ Pipeline::Pipeline(const std::shared_ptr<Device>     &device,
   shaderStages[1].module = createShaderModule("shaders/triangle.frag.spv");
   shaderStages[1].pName  = "main";
 
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
-  pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-  pipelineCreateInfo.pStages    = shaderStages.data();
+  VkGraphicsPipelineCreateInfo pipelineCreateInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+  pipelineCreateInfo.stageCount          = static_cast<uint32_t>(shaderStages.size());
+  pipelineCreateInfo.pStages             = shaderStages.data();
   pipelineCreateInfo.pVertexInputState   = &vertexInputStateCreateInfo;
   pipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
   pipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
@@ -95,13 +119,12 @@ Pipeline::Pipeline(const std::shared_ptr<Device>     &device,
   pipelineCreateInfo.pDepthStencilState  = &depthStencilStateCreateInfo;
   pipelineCreateInfo.pDynamicState       = &dynamicStateCreateInfo;
 
-  // We need to specify the pipeline layout and the render pass description up
-  // front as well.
+  // We need to specify the pipeline layout and the render pass description up front as well.
   pipelineCreateInfo.renderPass = renderPass->getHandle();
   pipelineCreateInfo.layout     = mPipelineLayout;
 
-  ASSERT(vkCreateGraphicsPipelines(device->getHandle(), VK_NULL_HANDLE, 1,
-                                   &pipelineCreateInfo, nullptr, &mHandle));
+  vkAssert(vkCreateGraphicsPipelines(device->getHandle(), VK_NULL_HANDLE, 1, &pipelineCreateInfo,
+                                     nullptr, &mHandle));
 
   // Pipeline is baked, we can delete the shader modules now.
   vkDestroyShaderModule(device->getHandle(), shaderStages[0].module, nullptr);
@@ -117,14 +140,34 @@ Pipeline::~Pipeline() {
 VkShaderModule Pipeline::createShaderModule(const char *path) {
   auto source = filesystem::read(path);
 
-  VkShaderModuleCreateInfo shaderModuleCreateInfo{
-      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+  VkShaderModuleCreateInfo shaderModuleCreateInfo{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
   shaderModuleCreateInfo.codeSize = source.size();
-  shaderModuleCreateInfo.pCode =
-      reinterpret_cast<const uint32_t *>(source.data());
+  shaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t *>(source.data());
 
   VkShaderModule shaderModule;
-  ASSERT(vkCreateShaderModule(mDevice->getHandle(), &shaderModuleCreateInfo,
-                              nullptr, &shaderModule));
+  vkAssert(
+      vkCreateShaderModule(mDevice->getHandle(), &shaderModuleCreateInfo, nullptr, &shaderModule));
   return shaderModule;
+}
+
+VkVertexInputBindingDescription
+Pipeline::createVertexInputBindingDescription(uint32_t binding, uint32_t stride,
+                                              VkVertexInputRate inputRate) {
+  VkVertexInputBindingDescription bindingDescription{};
+  bindingDescription.binding   = binding;
+  bindingDescription.stride    = stride;
+  bindingDescription.inputRate = inputRate;
+  return bindingDescription;
+}
+
+VkVertexInputAttributeDescription Pipeline::createVertexInputAttributeDescription(uint32_t binding,
+                                                                                  uint32_t location,
+                                                                                  VkFormat format,
+                                                                                  uint32_t offset) {
+  VkVertexInputAttributeDescription attributeDescription{};
+  attributeDescription.location = location;
+  attributeDescription.binding  = binding;
+  attributeDescription.format   = format;
+  attributeDescription.offset   = offset;
+  return attributeDescription;
 }

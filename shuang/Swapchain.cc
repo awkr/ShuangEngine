@@ -5,29 +5,25 @@
 #include "RenderPass.h"
 #include "Surface.h"
 
-Swapchain::Swapchain(const std::shared_ptr<Device>  &device,
-                     const std::shared_ptr<Surface> &surface)
+Swapchain::Swapchain(const std::shared_ptr<Device> &device, const std::shared_ptr<Surface> &surface)
     : mDevice{device} {
   VkSurfaceCapabilitiesKHR capabilities;
-  ASSERT(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-      device->getPhysicalDevice()->getHandle(), surface->getHandle(),
-      &capabilities));
+  vkAssert(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->getPhysicalDevice()->getHandle(),
+                                                     surface->getHandle(), &capabilities));
 
   uint32_t surfaceFormatCount;
   vkGetPhysicalDeviceSurfaceFormatsKHR(device->getPhysicalDevice()->getHandle(),
-                                       surface->getHandle(),
-                                       &surfaceFormatCount, nullptr);
+                                       surface->getHandle(), &surfaceFormatCount, nullptr);
   if (surfaceFormatCount == 0) {
     throw std::runtime_error("Surface has no formats.");
   }
   std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
-  vkGetPhysicalDeviceSurfaceFormatsKHR(
-      device->getPhysicalDevice()->getHandle(), surface->getHandle(),
-      &surfaceFormatCount, surfaceFormats.data());
+  vkGetPhysicalDeviceSurfaceFormatsKHR(device->getPhysicalDevice()->getHandle(),
+                                       surface->getHandle(), &surfaceFormatCount,
+                                       surfaceFormats.data());
 
   VkSurfaceFormatKHR surfaceFormat;
-  if (surfaceFormatCount == 1 &&
-      surfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
+  if (surfaceFormatCount == 1 && surfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
     // There is no preferred format, so pick a default one
     surfaceFormat        = surfaceFormats[0];
     surfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -69,16 +65,14 @@ Swapchain::Swapchain(const std::shared_ptr<Device>  &device,
   // Ideally, we desire to own 1 image at a time, the rest of the images can
   // either be rendered to and/or being queued up for display.
   uint32_t desiredImages = capabilities.minImageCount + 1;
-  if (capabilities.maxImageCount > 0 &&
-      desiredImages > capabilities.maxImageCount) {
+  if (capabilities.maxImageCount > 0 && desiredImages > capabilities.maxImageCount) {
     // Application must settle for fewer images than desired.
     desiredImages = capabilities.maxImageCount;
   }
 
   // Figure out a suitable surface transform.
   VkSurfaceTransformFlagBitsKHR preTransform;
-  if (capabilities.supportedTransforms &
-      VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
+  if (capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
     preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
   } else {
     preTransform = capabilities.currentTransform;
@@ -86,22 +80,17 @@ Swapchain::Swapchain(const std::shared_ptr<Device>  &device,
 
   // Find a supported composite type.
   VkCompositeAlphaFlagBitsKHR composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-  if (capabilities.supportedCompositeAlpha &
-      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR) {
+  if (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR) {
     composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-  } else if (capabilities.supportedCompositeAlpha &
-             VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) {
+  } else if (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) {
     composite = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
-  } else if (capabilities.supportedCompositeAlpha &
-             VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR) {
+  } else if (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR) {
     composite = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
-  } else if (capabilities.supportedCompositeAlpha &
-             VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) {
+  } else if (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) {
     composite = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
   }
 
-  VkSwapchainCreateInfoKHR swapchainCreateInfo{
-      VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+  VkSwapchainCreateInfoKHR swapchainCreateInfo{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
   swapchainCreateInfo.surface            = surface->getHandle();
   swapchainCreateInfo.minImageCount      = desiredImages;
   swapchainCreateInfo.imageFormat        = mImageFormat;
@@ -116,19 +105,15 @@ Swapchain::Swapchain(const std::shared_ptr<Device>  &device,
   swapchainCreateInfo.presentMode        = presentMode;
   swapchainCreateInfo.clipped            = true;
 
-  ASSERT(vkCreateSwapchainKHR(mDevice->getHandle(), &swapchainCreateInfo,
-                              nullptr, &mHandle));
+  vkAssert(vkCreateSwapchainKHR(mDevice->getHandle(), &swapchainCreateInfo, nullptr, &mHandle));
 
-  ASSERT(vkGetSwapchainImagesKHR(mDevice->getHandle(), mHandle, &mImageCount,
-                                 nullptr));
+  vkAssert(vkGetSwapchainImagesKHR(mDevice->getHandle(), mHandle, &mImageCount, nullptr));
   mImages.resize(mImageCount);
-  ASSERT(vkGetSwapchainImagesKHR(mDevice->getHandle(), mHandle, &mImageCount,
-                                 mImages.data()));
+  vkAssert(vkGetSwapchainImagesKHR(mDevice->getHandle(), mHandle, &mImageCount, mImages.data()));
 
   for (size_t i = 0; i < mImageCount; ++i) {
     // Create an image view which we can render into.
-    VkImageViewCreateInfo imageViewCreateInfo{
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+    VkImageViewCreateInfo imageViewCreateInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
     imageViewCreateInfo.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
     imageViewCreateInfo.format                      = surfaceFormat.format;
     imageViewCreateInfo.image                       = mImages[i];
@@ -141,8 +126,7 @@ Swapchain::Swapchain(const std::shared_ptr<Device>  &device,
     imageViewCreateInfo.components.a                = VK_COMPONENT_SWIZZLE_A;
 
     VkImageView imageView;
-    ASSERT(vkCreateImageView(mDevice->getHandle(), &imageViewCreateInfo,
-                             nullptr, &imageView));
+    vkAssert(vkCreateImageView(mDevice->getHandle(), &imageViewCreateInfo, nullptr, &imageView));
 
     mImageViews.push_back(imageView);
   }
@@ -151,11 +135,11 @@ Swapchain::Swapchain(const std::shared_ptr<Device>  &device,
   // Every swapchain image has its own command pool and fence manager.
   // This makes it very easy to keep track of when we can reset command buffers
   // and such.
-  mFrameClips.clear();
-  mFrameClips.resize(mImageCount);
+  mFrames.clear();
+  mFrames.resize(mImageCount);
 
   for (size_t i = 0; i < mImageCount; ++i) {
-    initFrameClip(mFrameClips[i]);
+    initFrame(mFrames[i]);
   }
 }
 
@@ -166,17 +150,13 @@ Swapchain::~Swapchain() {
     vkDestroySemaphore(mDevice->getHandle(), semaphore, nullptr);
   }
 
-  for (auto &frameClip : mFrameClips) {
-    vkDestroySemaphore(mDevice->getHandle(), frameClip.releasedSemaphore,
-                       nullptr);
-    vkDestroySemaphore(mDevice->getHandle(), frameClip.acquiredSemaphore,
-                       nullptr);
-    vkFreeCommandBuffers(mDevice->getHandle(), frameClip.primaryCommandPool, 1,
-                         &frameClip.primaryCommandBuffer);
-    vkDestroyCommandPool(mDevice->getHandle(), frameClip.primaryCommandPool,
-                         nullptr);
-    vkDestroyFence(mDevice->getHandle(), frameClip.queueSubmittedFence,
-                   nullptr);
+  for (auto &frame : mFrames) {
+    vkDestroySemaphore(mDevice->getHandle(), frame.releasedSemaphore, nullptr);
+    vkDestroySemaphore(mDevice->getHandle(), frame.acquiredSemaphore, nullptr);
+    vkFreeCommandBuffers(mDevice->getHandle(), frame.primaryCommandPool, 1,
+                         &frame.primaryCommandBuffer);
+    vkDestroyCommandPool(mDevice->getHandle(), frame.primaryCommandPool, nullptr);
+    vkDestroyFence(mDevice->getHandle(), frame.queueSubmittedFence, nullptr);
   }
 
   cleanupFramebuffers();
@@ -188,36 +168,31 @@ Swapchain::~Swapchain() {
   vkDestroySwapchainKHR(mDevice->getHandle(), mHandle, nullptr);
 }
 
-void Swapchain::initFrameClip(FrameClip &frameClip) {
+void Swapchain::initFrame(Frame &frame) {
   VkFenceCreateInfo fenceCreateInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
   fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-  ASSERT(vkCreateFence(mDevice->getHandle(), &fenceCreateInfo, nullptr,
-                       &frameClip.queueSubmittedFence));
+  vkAssert(
+      vkCreateFence(mDevice->getHandle(), &fenceCreateInfo, nullptr, &frame.queueSubmittedFence));
 
-  VkCommandPoolCreateInfo commandPoolCreateInfo{
-      VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-  commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-  commandPoolCreateInfo.queueFamilyIndex =
-      mDevice->getQueueFamilyIndices().graphics;
-  ASSERT(vkCreateCommandPool(mDevice->getHandle(), &commandPoolCreateInfo,
-                             nullptr, &frameClip.primaryCommandPool));
+  VkCommandPoolCreateInfo commandPoolCreateInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+  commandPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+  commandPoolCreateInfo.queueFamilyIndex = mDevice->getQueueFamilyIndices().graphics;
+  vkAssert(vkCreateCommandPool(mDevice->getHandle(), &commandPoolCreateInfo, nullptr,
+                               &frame.primaryCommandPool));
 
   VkCommandBufferAllocateInfo commandBufferAllocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-  commandBufferAllocateInfo.commandPool = frameClip.primaryCommandPool;
-  commandBufferAllocateInfo.level       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  commandBufferAllocateInfo.commandPool        = frame.primaryCommandPool;
+  commandBufferAllocateInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   commandBufferAllocateInfo.commandBufferCount = 1;
-  ASSERT(vkAllocateCommandBuffers(mDevice->getHandle(),
-                                  &commandBufferAllocateInfo,
-                                  &frameClip.primaryCommandBuffer));
+  vkAssert(vkAllocateCommandBuffers(mDevice->getHandle(), &commandBufferAllocateInfo,
+                                    &frame.primaryCommandBuffer));
 }
 
-void Swapchain::createFramebuffers(
-    const std::shared_ptr<RenderPass> &renderPass) {
+void Swapchain::createFramebuffers(const std::shared_ptr<RenderPass> &renderPass) {
   for (const auto &imageView : mImageViews) {
     // Build the framebuffer.
-    VkFramebufferCreateInfo framebufferCreateInfo{
-        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+    VkFramebufferCreateInfo framebufferCreateInfo{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
     framebufferCreateInfo.renderPass      = renderPass->getHandle();
     framebufferCreateInfo.attachmentCount = 1;
     framebufferCreateInfo.pAttachments    = &imageView;
@@ -226,8 +201,8 @@ void Swapchain::createFramebuffers(
     framebufferCreateInfo.layers          = 1;
 
     VkFramebuffer framebuffer;
-    ASSERT(vkCreateFramebuffer(mDevice->getHandle(), &framebufferCreateInfo,
-                               nullptr, &framebuffer));
+    vkAssert(
+        vkCreateFramebuffer(mDevice->getHandle(), &framebufferCreateInfo, nullptr, &framebuffer));
     mFramebuffers.push_back(framebuffer);
   }
 }
@@ -245,23 +220,21 @@ void Swapchain::cleanupFramebuffers() {
 VkResult Swapchain::acquireNextImage(uint32_t &imageIndex) {
   VkSemaphore semaphore;
   if (mSemaphorePool.empty()) {
-    VkSemaphoreCreateInfo semaphoreCreateInfo = {
-        VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-    ASSERT(vkCreateSemaphore(mDevice->getHandle(), &semaphoreCreateInfo,
-                             nullptr, &semaphore));
+    VkSemaphoreCreateInfo semaphoreCreateInfo = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    vkAssert(vkCreateSemaphore(mDevice->getHandle(), &semaphoreCreateInfo, nullptr, &semaphore));
   } else {
     semaphore = mSemaphorePool.back();
     mSemaphorePool.pop_back();
   }
 
-  auto result = vkAcquireNextImageKHR(mDevice->getHandle(), mHandle, UINT64_MAX,
-                                      semaphore, VK_NULL_HANDLE, &imageIndex);
+  auto result = vkAcquireNextImageKHR(mDevice->getHandle(), mHandle, UINT64_MAX, semaphore,
+                                      VK_NULL_HANDLE, &imageIndex);
   if (result != VK_SUCCESS) {
     mSemaphorePool.push_back(semaphore);
     return result;
   }
 
-  auto &frameClip = mFrameClips[imageIndex];
+  auto &frame = mFrames[imageIndex];
 
   // If we have outstanding fence for this swapchain imageIndex, wait for it
   // to complete first. After begin frame returns, it is safe to reuse or delete
@@ -271,22 +244,21 @@ VkResult Swapchain::acquireNextImage(uint32_t &imageIndex) {
   // waiting for all GPU work to complete before this returns.
   // Normally, this doesn't really block at all, since we're waiting for old
   // frames to have been completed, but just in case.
-  if (frameClip.queueSubmittedFence != VK_NULL_HANDLE) {
-    vkWaitForFences(mDevice->getHandle(), 1, &frameClip.queueSubmittedFence,
-                    true, UINT64_MAX);
-    vkResetFences(mDevice->getHandle(), 1, &frameClip.queueSubmittedFence);
+  if (frame.queueSubmittedFence != VK_NULL_HANDLE) {
+    vkWaitForFences(mDevice->getHandle(), 1, &frame.queueSubmittedFence, true, UINT64_MAX);
+    vkResetFences(mDevice->getHandle(), 1, &frame.queueSubmittedFence);
   }
 
-  if (frameClip.primaryCommandPool != VK_NULL_HANDLE) {
-    vkResetCommandPool(mDevice->getHandle(), frameClip.primaryCommandPool, 0);
+  if (frame.primaryCommandPool != VK_NULL_HANDLE) {
+    vkResetCommandPool(mDevice->getHandle(), frame.primaryCommandPool, 0);
   }
 
   // Recycle the old semaphore back into the semaphore pool.
-  if (frameClip.acquiredSemaphore != VK_NULL_HANDLE) {
-    mSemaphorePool.push_back(frameClip.acquiredSemaphore);
+  if (frame.acquiredSemaphore != VK_NULL_HANDLE) {
+    mSemaphorePool.push_back(frame.acquiredSemaphore);
   }
 
-  frameClip.acquiredSemaphore = semaphore;
+  frame.acquiredSemaphore = semaphore;
 
   return VK_SUCCESS;
 }

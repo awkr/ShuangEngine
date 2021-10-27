@@ -4,9 +4,8 @@
 
 class Instance {
 public:
-  Instance(const char                      *applicationName,
-           const std::vector<const char *> &requiredExtensions = {},
-           bool                             enableValidation   = true);
+  Instance(const char *applicationName, const std::vector<const char *> &requiredExtensions = {},
+           bool enableValidation = true);
   ~Instance();
 
   const VkInstance &getHandle() const { return mHandle; }

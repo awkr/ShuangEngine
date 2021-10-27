@@ -5,17 +5,16 @@
 
 #include <vulkan/vulkan_metal.h>
 
-Instance::Instance(const char                      *applicationName,
-                   const std::vector<const char *> &requiredExtensions,
-                   bool                             enableValidation)
+Instance::Instance(const char *applicationName, const std::vector<const char *> &requiredExtensions,
+                   bool enableValidation)
     : mEnableValidation{enableValidation} {
   // Get extensions supported by the instance
   uint32_t extensionCount;
   vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
   if (extensionCount > 0) {
     std::vector<VkExtensionProperties> extensions(extensionCount);
-    if (vkEnumerateInstanceExtensionProperties(
-            nullptr, &extensionCount, extensions.data()) == VK_SUCCESS) {
+    if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()) ==
+        VK_SUCCESS) {
       //      log_info("Supported instance extensions: {}", extensionCount);
       for (const auto &extension : extensions) {
         //        log_info("  {}", extension.extensionName);
@@ -33,8 +32,8 @@ Instance::Instance(const char                      *applicationName,
   }
   for (const auto &extension : requiredExtensions) {
     if (!isExtensionSupport(extension)) {
-      throw std::runtime_error(fmt::format(
-          "Requested instance extension not present: {}", extension));
+      throw std::runtime_error(
+          fmt::format("Requested instance extension not present: {}", extension));
     }
     extensions.emplace_back(extension);
   }
@@ -70,7 +69,7 @@ Instance::Instance(const char                      *applicationName,
     }
   }
 
-  ASSERT(vkCreateInstance(&instanceCreateInfo, nullptr, &mHandle));
+  vkAssert(vkCreateInstance(&instanceCreateInfo, nullptr, &mHandle));
 
   if (enableValidation) {
     VkDebugReportFlagsEXT reportFlags = VK_DEBUG_REPORT_WARNING_BIT_EXT |
@@ -91,8 +90,8 @@ Instance::~Instance() {
 }
 
 bool Instance::isExtensionSupport(const char *extension) {
-  return std::find(mSupportedExtensions.begin(), mSupportedExtensions.end(),
-                   extension) != mSupportedExtensions.end();
+  return std::find(mSupportedExtensions.begin(), mSupportedExtensions.end(), extension) !=
+         mSupportedExtensions.end();
 }
 
 bool Instance::isLayerSupport(const char *name) {
@@ -104,6 +103,4 @@ bool Instance::isLayerSupport(const char *name) {
   return false;
 }
 
-bool Instance::equals(const char *a, const char *b) {
-  return strcmp(a, b) == 0;
-}
+bool Instance::equals(const char *a, const char *b) { return strcmp(a, b) == 0; }

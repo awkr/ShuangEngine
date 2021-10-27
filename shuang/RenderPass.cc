@@ -3,8 +3,7 @@
 #include "Logger.h"
 #include "Macros.h"
 
-RenderPass::RenderPass(const std::shared_ptr<Device> &device,
-                       const VkFormat                 format)
+RenderPass::RenderPass(const std::shared_ptr<Device> &device, const VkFormat format)
     : mDevice{device} {
   VkAttachmentDescription attachment = {0};
   attachment.format                  = format;
@@ -26,8 +25,7 @@ RenderPass::RenderPass(const std::shared_ptr<Device> &device,
   // We have one subpass. This subpass has one color attachment.
   // While executing this subpass, the attachment will be in attachment optimal
   // layout.
-  VkAttachmentReference attachmentRef = {
-      0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+  VkAttachmentReference attachmentRef = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
   // We will end up with two transitions.
   // The first one happens right before we start subpass #0, where
@@ -48,27 +46,25 @@ RenderPass::RenderPass(const std::shared_ptr<Device> &device,
   VkSubpassDependency dependency = {0};
   dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
   dependency.dstSubpass          = 0;
-  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
   // Since we changed the image layout, we need to make the memory visible to
   // color attachment to modify.
   dependency.srcAccessMask = 0;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependency.dstAccessMask =
+      VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
   // Finally, create the render pass.
-  VkRenderPassCreateInfo renderPassCreateInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
-  renderPassCreateInfo.attachmentCount = 1;
-  renderPassCreateInfo.pAttachments    = &attachment;
-  renderPassCreateInfo.subpassCount    = 1;
-  renderPassCreateInfo.pSubpasses      = &subpass;
-  renderPassCreateInfo.dependencyCount = 1;
-  renderPassCreateInfo.pDependencies   = &dependency;
+  VkRenderPassCreateInfo renderPassCreateInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+  renderPassCreateInfo.attachmentCount        = 1;
+  renderPassCreateInfo.pAttachments           = &attachment;
+  renderPassCreateInfo.subpassCount           = 1;
+  renderPassCreateInfo.pSubpasses             = &subpass;
+  renderPassCreateInfo.dependencyCount        = 1;
+  renderPassCreateInfo.pDependencies          = &dependency;
 
-  ASSERT(vkCreateRenderPass(device->getHandle(), &renderPassCreateInfo, nullptr,
-                            &mHandle));
+  vkAssert(vkCreateRenderPass(device->getHandle(), &renderPassCreateInfo, nullptr, &mHandle));
 }
 
 RenderPass::~RenderPass() {

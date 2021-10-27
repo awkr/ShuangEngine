@@ -7,8 +7,7 @@ class Application;
 
 class Window {
 public:
-  Window(const Application *exampleBase, uint32_t width, uint32_t height,
-         const char *title);
+  Window(const Application *exampleBase, uint32_t width, uint32_t height, const char *title);
   ~Window();
 
   bool shouldClose();

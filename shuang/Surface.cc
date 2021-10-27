@@ -3,8 +3,7 @@
 #include "Logger.h"
 #include "Window.h"
 
-Surface::Surface(const std::shared_ptr<Instance> &instance,
-                 const std::shared_ptr<Window>   &window)
+Surface::Surface(const std::shared_ptr<Instance> &instance, const std::shared_ptr<Window> &window)
     : mInstance{instance} {
   mHandle = window->createSurface(instance->getHandle());
   mExtent = window->getExtent();

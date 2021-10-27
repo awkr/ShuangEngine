@@ -23,6 +23,6 @@ public:
   KeyCode getCode() const { return mCode; }
 
 private:
-  KeyCode mCode;
+  KeyCode   mCode;
   KeyAction mAction;
 };

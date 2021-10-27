@@ -16,9 +16,9 @@ public:
   }
 
   void setPerspective(float fov, float aspect, float zNear, float zFar) {
-    mFov = fov;
+    mFov   = fov;
     mZNear = zNear;
-    mZFar = zFar;
+    mZFar  = zFar;
   }
 
   void setRotation(glm::vec3 rotation) {
@@ -29,10 +29,10 @@ public:
 private:
   void updateViewMatrix() {}
 
-  CameraType mType = CameraType::LOOK_AT;
-  glm::vec3 mPosition = glm::vec3();
-  glm::vec3 mRotation = glm::vec3();
-  float mFov;
-  float mZNear;
-  float mZFar;
+  CameraType mType     = CameraType::LOOK_AT;
+  glm::vec3  mPosition = glm::vec3();
+  glm::vec3  mRotation = glm::vec3();
+  float      mFov;
+  float      mZNear;
+  float      mZFar;
 };
