@@ -6,7 +6,9 @@
 
 class Camera {
 public:
-  enum CameraType { LOOK_AT };
+  enum CameraType { LOOK_AT, FIRST_PERSON };
+
+  ~Camera();
 
   void setType(const CameraType type) { mType = type; }
 
@@ -35,4 +37,6 @@ private:
   float      mFov;
   float      mZNear;
   float      mZFar;
+  float      mRotateSpeed = 0.1f;
+  float      mMoveSpeed   = 1.0f;
 };

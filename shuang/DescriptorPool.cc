@@ -3,18 +3,22 @@
 #include "Logger.h"
 #include "Macros.h"
 
-DescriptorPool::DescriptorPool(const std::shared_ptr<Device> &device) : mDevice{device} {
-  // TODO
+DescriptorPool::DescriptorPool(const std::shared_ptr<Device> &device, uint32_t descriptorCount,
+                               uint32_t maxSets)
+    : mDevice{device} {
+  std::vector<VkDescriptorPoolSize> descriptorPoolSizes{};
 
-  VkDescriptorPoolSize descriptorPoolSize{};
+  VkDescriptorPoolSize descriptorPoolSize;
   descriptorPoolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  descriptorPoolSize.descriptorCount = 2;
+  descriptorPoolSize.descriptorCount = descriptorCount;
 
-  VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
-  descriptorPoolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  descriptorPoolCreateInfo.poolSizeCount = 1;
-  descriptorPoolCreateInfo.pPoolSizes    = &descriptorPoolSize;
-  descriptorPoolCreateInfo.maxSets       = 2;
+  descriptorPoolSizes.push_back(descriptorPoolSize);
+
+  VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{
+      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+  descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSizes.size();
+  descriptorPoolCreateInfo.pPoolSizes    = descriptorPoolSizes.data();
+  descriptorPoolCreateInfo.maxSets       = maxSets;
 
   vkAssert(
       vkCreateDescriptorPool(device->getHandle(), &descriptorPoolCreateInfo, nullptr, &mHandle));

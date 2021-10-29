@@ -49,48 +49,68 @@ bool Application::setup(bool enableValidation) {
   mPhysicalDevice = std::make_shared<PhysicalDevice>(mInstance);
   mDevice         = std::make_shared<Device>(mPhysicalDevice, mSurface);
   mSwapchain      = std::make_shared<Swapchain>(mDevice, mSurface);
+  auto imageCount = mSwapchain->getImageCount();
   mRenderPass     = std::make_shared<RenderPass>(mDevice, mSwapchain->getImageFormat());
   mSwapchain->createFramebuffers(mRenderPass);
-  //  mDescriptorSetLayout      = std::make_shared<DescriptorSetLayout>(mDevice);
-  //  auto descriptorSetLayouts = {mDescriptorSetLayout};
-  mPipeline = std::make_shared<Pipeline>(mDevice, mRenderPass);
-  //  mDescriptorPool = std::make_shared<DescriptorPool>(mDevice);
 
-  prepare();
+  initializeBuffers();
+
+  mDescriptorSetLayout = std::make_shared<DescriptorSetLayout>(mDevice);
+
+  auto setLayouts = {mDescriptorSetLayout->getHandle()};
+  mPipeline       = std::make_shared<Pipeline>(mDevice, mRenderPass, setLayouts);
+  mDescriptorPool = std::make_shared<DescriptorPool>(mDevice, imageCount, imageCount);
+
+  auto bufferInfo = createDescriptorBufferInfo(mUniformBuffer->getHandle());
+  mDescriptorSet =
+      std::make_shared<DescriptorSet>(mDevice, mDescriptorPool, 1, setLayouts, bufferInfo);
+
+  //  mCamera = std::make_shared<Camera>();
+  //  mCamera->setPosition(glm::vec3(0, 0, -2.5f));
+  //  mCamera->setPerspective(60.0f, (float)mWidth / (float)mHeight, 1.0f, 256.0f);
 
   return true;
 }
 
-void Application::prepare() {
+struct vs_ubo_t {
+  glm::mat4 mvp;
+};
+
+void Application::initializeBuffers() {
   // Vertex buffer
   const std::vector<Vertex> vertices = {
       {glm::vec3(0.5, -0.5, 0), glm::vec3(1, 0, 0)},
       {glm::vec3(0.5, 0.5, 0), glm::vec3(0, 1, 0)},
       {glm::vec3(-0.5, -0.5, 0), glm::vec3(0, 0, 1)},
   };
-  auto size          = vertices.size() * sizeof(Vertex);
-  auto stagingBuffer = std::make_shared<Buffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                                size, (void *)vertices.data());
-  mVertexBuffer      = std::make_unique<VertexBuffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+  auto size     = vertices.size() * sizeof(Vertex);
+  auto buf      = std::make_shared<Buffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                      size, (void *)vertices.data());
+  mVertexBuffer = std::make_unique<VertexBuffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, size);
-  mVertexBuffer->copyFrom(stagingBuffer, mDevice->getGraphicsQueue());
+  mVertexBuffer->copyFrom(buf, mDevice->getGraphicsQueue());
 
   // Index buffer
   const std::vector<uint32_t> indices = {0, 1, 2};
   size                                = indices.size() * sizeof(uint32_t);
 
-  stagingBuffer.reset();
-  stagingBuffer = std::make_shared<Buffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                           size, (void *)indices.data());
+  buf.reset();
+  buf = std::make_shared<Buffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                 size, (void *)indices.data());
 
   mIndexBuffer =
       std::make_unique<IndexBuffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indices.size(), size);
-  mIndexBuffer->copyFrom(stagingBuffer, mDevice->getGraphicsQueue());
+  mIndexBuffer->copyFrom(buf, mDevice->getGraphicsQueue());
+
+  // Uniform buffer
+  mUniformBuffer = std::make_unique<UniformBuffer>(
+      mDevice, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      sizeof(vs_ubo_t));
 }
 
 void Application::update() {
@@ -140,6 +160,9 @@ VkResult Application::render(const uint32_t imageIndex) {
   renderPassBeginInfo.pClearValues             = &clearValue;
   // We will add draw commands in the same command buffer.
   vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->getLayout(), 0,
+                          1, &mDescriptorSet->getHandle(), 0, nullptr);
 
   // Bind the graphics pipeline.
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->getHandle());
@@ -201,4 +224,13 @@ VkResult Application::present(const uint32_t imageIndex) {
   presentInfo.pWaitSemaphores    = &frame.releasedSemaphore;
   // Present swapchain imageIndex
   return vkQueuePresentKHR(mDevice->getGraphicsQueue(), &presentInfo);
+}
+
+VkDescriptorBufferInfo Application::createDescriptorBufferInfo(VkBuffer buffer, VkDeviceSize range,
+                                                               VkDeviceSize offset) {
+  VkDescriptorBufferInfo descriptorBufferInfo{};
+  descriptorBufferInfo.buffer = buffer;
+  descriptorBufferInfo.range  = range;
+  descriptorBufferInfo.offset = offset;
+  return descriptorBufferInfo;
 }

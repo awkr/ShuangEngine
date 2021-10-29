@@ -35,6 +35,44 @@ void keyCallback(GLFWwindow *window, int key, int /* scancode */, int action, in
   case GLFW_KEY_ESCAPE:
     keyCode = KeyCode::ESCAPE;
     break;
+  case GLFW_KEY_UP:
+    keyCode = KeyCode::UP;
+    break;
+  case GLFW_KEY_DOWN:
+    keyCode = KeyCode::DOWN;
+    break;
+  case GLFW_KEY_LEFT:
+    keyCode = KeyCode::LEFT;
+    break;
+  case GLFW_KEY_RIGHT:
+    keyCode = KeyCode::RIGHT;
+    break;
+  case GLFW_KEY_H:
+    keyCode = KeyCode::H;
+    break;
+  case GLFW_KEY_L:
+    keyCode = KeyCode::L;
+    break;
+  case GLFW_KEY_J:
+    keyCode = KeyCode::J;
+    break;
+  case GLFW_KEY_K:
+    keyCode = KeyCode::K;
+    break;
+  case GLFW_KEY_W:
+    keyCode = KeyCode::W;
+    break;
+  case GLFW_KEY_S:
+    keyCode = KeyCode::S;
+    break;
+  case GLFW_KEY_A:
+    keyCode = KeyCode::A;
+    break;
+  case GLFW_KEY_D:
+    keyCode = KeyCode::D;
+    break;
+  default:
+    keyCode = KeyCode::NONE;
   }
 
   KeyAction keyAction;

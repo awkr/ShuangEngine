@@ -1,5 +1,4 @@
 #include "Pipeline.h"
-#include "DescriptorSetLayout.h"
 #include "Device.h"
 #include "FileSystem.h"
 #include "Logger.h"
@@ -7,22 +6,17 @@
 #include "RenderPass.h"
 #include "Vertex.h"
 
-Pipeline::Pipeline(const std::shared_ptr<Device>                           &device,
-                   const std::shared_ptr<RenderPass>                       &renderPass,
-                   const std::vector<std::shared_ptr<DescriptorSetLayout>> &descriptorSetLayouts)
+Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
+                   const std::shared_ptr<RenderPass>        &renderPass,
+                   const std::vector<VkDescriptorSetLayout> &descriptorSetLayouts)
     : mDevice{device} {
   // Create a pipeline layout.
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
-  //  std::vector<VkDescriptorSetLayout> setLayouts{};
-  //  setLayouts.reserve(descriptorSetLayouts.size());
-  //  for (const auto &descriptorSetLayout : descriptorSetLayouts) {
-  //    setLayouts.push_back(descriptorSetLayout->getHandle());
-  //  }
-  //  pipelineLayoutCreateInfo.pSetLayouts    = setLayouts.data();
-  //  pipelineLayoutCreateInfo.setLayoutCount = setLayouts.size();
-  vkAssert(vkCreatePipelineLayout(mDevice->getHandle(), &pipelineLayoutCreateInfo, nullptr,
-                                  &mPipelineLayout));
+  pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts.data();
+  pipelineLayoutCreateInfo.setLayoutCount = descriptorSetLayouts.size();
+  vkAssert(
+      vkCreatePipelineLayout(mDevice->getHandle(), &pipelineLayoutCreateInfo, nullptr, &mLayout));
 
   // Vertex binding and attributes
   // Binding descriptions
@@ -121,7 +115,7 @@ Pipeline::Pipeline(const std::shared_ptr<Device>                           &devi
 
   // We need to specify the pipeline layout and the render pass description up front as well.
   pipelineCreateInfo.renderPass = renderPass->getHandle();
-  pipelineCreateInfo.layout     = mPipelineLayout;
+  pipelineCreateInfo.layout     = mLayout;
 
   vkAssert(vkCreateGraphicsPipelines(device->getHandle(), VK_NULL_HANDLE, 1, &pipelineCreateInfo,
                                      nullptr, &mHandle));
@@ -134,7 +128,7 @@ Pipeline::Pipeline(const std::shared_ptr<Device>                           &devi
 Pipeline::~Pipeline() {
   log_func;
   vkDestroyPipeline(mDevice->getHandle(), mHandle, nullptr);
-  vkDestroyPipelineLayout(mDevice->getHandle(), mPipelineLayout, nullptr);
+  vkDestroyPipelineLayout(mDevice->getHandle(), mLayout, nullptr);
 }
 
 VkShaderModule Pipeline::createShaderModule(const char *path) {

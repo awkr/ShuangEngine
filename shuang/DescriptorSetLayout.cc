@@ -5,12 +5,9 @@
 
 DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device> &device) : mDevice{device} {
   std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings = {
-      // bind point 0: vertex shader uniform buffer
+      // bind 0: vertex shader uniform buffer
       createDescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                        VK_SHADER_STAGE_VERTEX_BIT, 0),
-      // bind point 1: fragment shader combined sampler
-      createDescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                       VK_SHADER_STAGE_FRAGMENT_BIT, 1),
   };
 
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};

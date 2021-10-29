@@ -9,10 +9,11 @@ class DescriptorSetLayout;
 class Pipeline {
 public:
   Pipeline(const std::shared_ptr<Device> &device, const std::shared_ptr<RenderPass> &renderPass,
-           const std::vector<std::shared_ptr<DescriptorSetLayout>> &descriptorSetLayouts = {});
+           const std::vector<VkDescriptorSetLayout> &descriptorSetLayouts = {});
   ~Pipeline();
 
-  const VkPipeline &getHandle() const { return mHandle; }
+  const VkPipeline       &getHandle() const { return mHandle; }
+  const VkPipelineLayout &getLayout() const { return mLayout; }
 
 private:
   VkShaderModule createShaderModule(const char *path);
@@ -25,6 +26,6 @@ private:
                                                                                  uint32_t offset);
 
   const std::shared_ptr<Device> &mDevice = nullptr;
-  VkPipelineLayout               mPipelineLayout;
+  VkPipelineLayout               mLayout;
   VkPipeline                     mHandle;
 };

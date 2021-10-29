@@ -22,6 +22,8 @@ public:
 
   const VkSwapchainKHR           &getHandle() const { return mHandle; }
   const VkFormat                 &getImageFormat() const { return mImageFormat; }
+  uint32_t                        getImageCount() const { return mImageCount; }
+  const std::vector<VkImage>     &getImages() const { return mImages; }
   const std::vector<VkImageView> &getImageViews() const { return mImageViews; }
   const VkExtent2D               &getImageExtent() const { return mImageExtent; }
   std::vector<Frame>             &getFrames() { return mFrames; }
