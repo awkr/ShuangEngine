@@ -77,9 +77,14 @@ void keyCallback(GLFWwindow *window, int key, int /* scancode */, int action, in
 
   KeyAction keyAction;
   switch (action) {
+  case GLFW_PRESS:
+    keyAction = KeyAction::DOWN;
+    break;
   case GLFW_RELEASE:
     keyAction = KeyAction::UP;
     break;
+  default:
+    keyAction = KeyAction::NONE;
   }
 
   application->handleEvent(KeyInputEvent{keyCode, keyAction});
@@ -133,3 +138,5 @@ VkSurfaceKHR Window::createSurface(const VkInstance instance) const {
   vkAssert(glfwCreateWindowSurface(instance, mHandle, nullptr, &surface));
   return surface;
 }
+
+double Window::getTime() const { return glfwGetTime(); }

@@ -16,6 +16,7 @@ public:
 
   VkSurfaceKHR      createSurface(VkInstance instance) const;
   const VkExtent2D &getExtent() const { return mExtent; }
+  double            getTime() const;
 
 private:
   VkExtent2D  mExtent;

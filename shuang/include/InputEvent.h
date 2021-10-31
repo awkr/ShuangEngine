@@ -20,9 +20,12 @@ public:
   KeyInputEvent(KeyCode code, KeyAction action)
       : InputEvent{InputEventSource::KEYBOARD}, mCode{code}, mAction{action} {}
 
-  [[nodiscard]] KeyCode getCode() const { return mCode; }
+  [[nodiscard]] KeyCode   getCode() const { return mCode; }
+  [[nodiscard]] KeyAction getAction() const { return mAction; }
 
 private:
   KeyCode   mCode;
   KeyAction mAction;
 };
+
+const char *toString(KeyAction action);

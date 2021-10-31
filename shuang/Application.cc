@@ -2,17 +2,43 @@
 #include "Macros.h"
 #include "Vertex.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <spdlog/spdlog.h>
+
+struct vs_ubo_t {
+  alignas(16) glm::mat4 model;
+  alignas(16) glm::mat4 view;
+  alignas(16) glm::mat4 proj;
+};
 
 Application::Application() { spdlog::set_level(spdlog::level::debug); }
 
 Application::~Application() { log_func; }
 
+float xOffset = 0;
+
 void Application::handleEvent(const InputEvent &inputEvent) {
   if (inputEvent.getSource() == InputEventSource::KEYBOARD) {
     const auto &keyInputEvent = static_cast<const KeyInputEvent &>(inputEvent);
-    if (keyInputEvent.getCode() == KeyCode::ESCAPE) {
+    switch (auto code = keyInputEvent.getCode(); code) {
+    case KeyCode::ESCAPE:
       mWindow->close();
+      break;
+
+    case KeyCode::LEFT: // move camera horizontally
+      xOffset -= 10;
+      break;
+    case KeyCode::RIGHT:
+      xOffset += 10;
+      break;
+
+    case KeyCode::UP: // move camera vertically
+    case KeyCode::DOWN:
+      break;
+
+    default:
+      log_warn("What should I do: key #{}, action #{} ?", code, keyInputEvent.getAction());
     }
   }
 }
@@ -61,36 +87,38 @@ bool Application::setup(bool enableValidation) {
   mPipeline       = std::make_shared<Pipeline>(mDevice, mRenderPass, setLayouts);
   mDescriptorPool = std::make_shared<DescriptorPool>(mDevice, imageCount, imageCount);
 
-  auto bufferInfo = createDescriptorBufferInfo(mUniformBuffer->getHandle());
+  auto bufferInfo = createDescriptorBufferInfo(mUniformBuffer->getHandle(), sizeof(vs_ubo_t));
   mDescriptorSet =
       std::make_shared<DescriptorSet>(mDevice, mDescriptorPool, 1, setLayouts, bufferInfo);
 
   //  mCamera = std::make_shared<Camera>();
-  //  mCamera->setPosition(glm::vec3(0, 0, -2.5f));
+  //  mCamera->setPosition(glm::vec3(0, 0, 2.f));
   //  mCamera->setPerspective(60.0f, (float)mWidth / (float)mHeight, 1.0f, 256.0f);
 
   return true;
 }
 
-struct vs_ubo_t {
-  glm::mat4 mvp;
-};
-
 void Application::initializeBuffers() {
   // Vertex buffer
   const std::vector<Vertex> vertices = {
-      {glm::vec3(0.5, -0.5, 0), glm::vec3(1, 0, 0)},
-      {glm::vec3(0.5, 0.5, 0), glm::vec3(0, 1, 0)},
-      {glm::vec3(-0.5, -0.5, 0), glm::vec3(0, 0, 1)},
+      //      {{-1.f, -1.f, .0f}, {1.0f, 0.0f, 0.0f}},
+      //      {{1.f, -1.f, .0f}, {0.0f, 1.0f, 0.0f}},
+      //      {{1.f, 1.f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+      //      {{-1.f, 1.f, 0.0f}, {1.0f, 1.0f, 1.0f}},
+
+      {{-.5f, .5f, .0f}, {1.0f, 0.0f, 0.0f}},
+      {{.5f, .5f, .0f}, {0.0f, 1.0f, 0.0f}},
+      {{.5f, -.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
   };
-  auto size     = vertices.size() * sizeof(Vertex);
+  auto size = vertices.size() * sizeof(Vertex);
+
   auto buf      = std::make_shared<Buffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                       size, (void *)vertices.data());
   mVertexBuffer = std::make_unique<VertexBuffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, size);
-  mVertexBuffer->copyFrom(buf, mDevice->getGraphicsQueue());
+  mVertexBuffer->copy(buf, mDevice->getGraphicsQueue());
 
   // Index buffer
   const std::vector<uint32_t> indices = {0, 1, 2};
@@ -105,12 +133,39 @@ void Application::initializeBuffers() {
   mIndexBuffer =
       std::make_unique<IndexBuffer>(mDevice, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indices.size(), size);
-  mIndexBuffer->copyFrom(buf, mDevice->getGraphicsQueue());
+  mIndexBuffer->copy(buf, mDevice->getGraphicsQueue());
 
   // Uniform buffer
   mUniformBuffer = std::make_unique<UniformBuffer>(
       mDevice, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
       sizeof(vs_ubo_t));
+
+  updateUniformBuffer();
+}
+
+void Application::updateUniformBuffer() {
+  static auto startTime   = std::chrono::high_resolution_clock::now();
+  auto        currentTime = std::chrono::high_resolution_clock::now();
+  auto        time =
+      std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+  auto cameraPos    = glm::vec3(.0f, .0f, 3.0f);
+  auto cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+  //  auto cameraDir    = glm::normalize(cameraPos - cameraTarget);
+  auto cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+  //  auto cameraRight  = glm::normalize(glm::cross(cameraUp, cameraDir));
+  //  cameraUp          = glm::cross(cameraDir, cameraRight);
+
+  vs_ubo_t ubo{};
+  //  ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f,
+  //  0.0f, 1.0f));
+  ubo.model = glm::mat4(1.f);
+  ubo.view  = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+  ubo.proj  = glm::perspective(glm::radians(60.0f), mWidth / (float)mHeight, 0.1f, 10.0f);
+
+  //  log_debug("view matrix: {}", glm::to_string(ubo.view));
+
+  mUniformBuffer->copy(&ubo, sizeof(ubo));
 }
 
 void Application::update() {
@@ -126,6 +181,8 @@ void Application::update() {
     vkQueueWaitIdle(mDevice->getGraphicsQueue());
     return;
   }
+
+  updateUniformBuffer();
 
   vkAssert(render(imageIndex));
   vkAssert(present(imageIndex));
@@ -185,6 +242,7 @@ VkResult Application::render(const uint32_t imageIndex) {
   vkCmdBindIndexBuffer(commandBuffer, mIndexBuffer->getHandle(), 0, VK_INDEX_TYPE_UINT32);
   // Draw three vertices with one instance.
   vkCmdDrawIndexed(commandBuffer, mIndexBuffer->getIndexCount(), 1, 0, 0, 0);
+  //  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
   // Complete render pass.
   vkCmdEndRenderPass(commandBuffer);

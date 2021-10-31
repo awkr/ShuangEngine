@@ -10,6 +10,9 @@ public:
 
   ~Camera();
 
+  const glm::mat4 &getViewMatrix() {}
+  const glm::mat4 &getProjectionMatrix() {}
+
   void setType(const CameraType type) { mType = type; }
 
   void setPosition(glm::vec3 position) {

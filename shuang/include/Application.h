@@ -40,8 +40,8 @@ protected:
 private:
   // create & initialize vertex / index buffer; create uniform buffer
   virtual void                  initializeBuffers();
-  static VkDescriptorBufferInfo createDescriptorBufferInfo(VkBuffer     buffer,
-                                                           VkDeviceSize range  = VK_WHOLE_SIZE,
+  void                          updateUniformBuffer();
+  static VkDescriptorBufferInfo createDescriptorBufferInfo(VkBuffer buffer, VkDeviceSize range,
                                                            VkDeviceSize offset = 0);
 
   std::shared_ptr<Window>              mWindow              = nullptr;

@@ -1,17 +1,17 @@
-#version 320 es
+#version 450
 
-precision mediump float;
-
-layout (binding = 0) uniform vs_ubo_t {
-    mat4 mvp;
+layout(binding = 0) uniform vs_ubo_t {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
 } vs_ubo;
 
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec3 inColor;
+layout(location = 0) in vec2 position;
+layout(location = 1) in vec3 color;
 
-layout (location = 0) out vec3 outColor;
+layout(location = 0) out vec3 fragColor;
 
 void main() {
-    gl_Position = vec4(inPos, 1.0);
-    outColor = inColor;
+    gl_Position = vs_ubo.proj * vs_ubo.view * vs_ubo.model * vec4(position, 0.0, 1.0);
+    fragColor = color;
 }

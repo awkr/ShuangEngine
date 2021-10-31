@@ -20,25 +20,25 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
 
   // Vertex binding and attributes
   // Binding descriptions
-  std::vector<VkVertexInputBindingDescription> vertexInputBindingDescriptions = {
+  std::vector<VkVertexInputBindingDescription> vertexInputBindings = {
       createVertexInputBindingDescription(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
   };
   // Attribute descriptions
-  std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions = {
+  std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = {
       createVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
                                             offsetof(Vertex, position)),
       createVertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
                                             offsetof(Vertex, color)),
   };
 
-  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{
+  VkPipelineVertexInputStateCreateInfo vertexInputState{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
-  vertexInputStateCreateInfo.pVertexBindingDescriptions = vertexInputBindingDescriptions.data();
-  vertexInputStateCreateInfo.vertexBindingDescriptionCount =
-      static_cast<uint32_t>(vertexInputBindingDescriptions.size());
-  vertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
-  vertexInputStateCreateInfo.vertexAttributeDescriptionCount =
-      static_cast<uint32_t>(vertexInputAttributeDescriptions.size());
+  vertexInputState.pVertexBindingDescriptions = vertexInputBindings.data();
+  vertexInputState.vertexBindingDescriptionCount =
+      static_cast<uint32_t>(vertexInputBindings.size());
+  vertexInputState.pVertexAttributeDescriptions = vertexInputAttributes.data();
+  vertexInputState.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(vertexInputAttributes.size());
 
   // Specify we will use triangle lists to draw geometry.
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{
@@ -46,11 +46,12 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
   inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
   // Specify rasterization state.
-  VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo{
+  VkPipelineRasterizationStateCreateInfo rasterizationState{
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
-  rasterizationStateCreateInfo.cullMode  = VK_CULL_MODE_BACK_BIT;
-  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-  rasterizationStateCreateInfo.lineWidth = 1.0f;
+  rasterizationState.cullMode  = VK_CULL_MODE_BACK_BIT;
+  rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  //  rasterizationState.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  rasterizationState.lineWidth = 1.0f;
 
   // Our attachment will write to all color channels, but no blending is enabled.
   VkPipelineColorBlendAttachmentState colorBlendAttachmentState{};
@@ -104,9 +105,9 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
   pipelineCreateInfo.stageCount          = static_cast<uint32_t>(shaderStages.size());
   pipelineCreateInfo.pStages             = shaderStages.data();
-  pipelineCreateInfo.pVertexInputState   = &vertexInputStateCreateInfo;
+  pipelineCreateInfo.pVertexInputState   = &vertexInputState;
   pipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
-  pipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
+  pipelineCreateInfo.pRasterizationState = &rasterizationState;
   pipelineCreateInfo.pColorBlendState    = &colorBlendStateCreateInfo;
   pipelineCreateInfo.pMultisampleState   = &multisampleStateCreateInfo;
   pipelineCreateInfo.pViewportState      = &viewportStateCreateInfo;
@@ -147,21 +148,21 @@ VkShaderModule Pipeline::createShaderModule(const char *path) {
 VkVertexInputBindingDescription
 Pipeline::createVertexInputBindingDescription(uint32_t binding, uint32_t stride,
                                               VkVertexInputRate inputRate) {
-  VkVertexInputBindingDescription bindingDescription{};
-  bindingDescription.binding   = binding;
-  bindingDescription.stride    = stride;
-  bindingDescription.inputRate = inputRate;
-  return bindingDescription;
+  VkVertexInputBindingDescription description{};
+  description.binding   = binding;
+  description.stride    = stride;
+  description.inputRate = inputRate;
+  return description;
 }
 
 VkVertexInputAttributeDescription Pipeline::createVertexInputAttributeDescription(uint32_t binding,
                                                                                   uint32_t location,
                                                                                   VkFormat format,
                                                                                   uint32_t offset) {
-  VkVertexInputAttributeDescription attributeDescription{};
-  attributeDescription.location = location;
-  attributeDescription.binding  = binding;
-  attributeDescription.format   = format;
-  attributeDescription.offset   = offset;
-  return attributeDescription;
+  VkVertexInputAttributeDescription description{};
+  description.location = location;
+  description.binding  = binding;
+  description.format   = format;
+  description.offset   = offset;
+  return description;
 }

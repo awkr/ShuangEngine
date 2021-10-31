@@ -50,7 +50,7 @@ Buffer::~Buffer() {
   vkDestroyBuffer(mDevice->getHandle(), mHandle, nullptr);
 }
 
-void Buffer::copyFrom(const std::shared_ptr<Buffer> &src, VkQueue queue, VkBufferCopy *region) {
+void Buffer::copy(const std::shared_ptr<Buffer> &src, VkQueue queue, VkBufferCopy *region) {
   VkBufferCopy bufferCopy{};
   if (!region) {
     bufferCopy.size = src->getSize();
@@ -61,4 +61,11 @@ void Buffer::copyFrom(const std::shared_ptr<Buffer> &src, VkQueue queue, VkBuffe
   auto copyCommand = mDevice->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
   vkCmdCopyBuffer(copyCommand, src->getHandle(), mHandle, 1, &bufferCopy);
   mDevice->flushCommandBuffer(copyCommand, queue);
+}
+
+void Buffer::copy(void *data, size_t size) {
+  void *mapped;
+  vkAssert(vkMapMemory(mDevice->getHandle(), mMemory, 0, size, 0, &mapped));
+  memcpy(mapped, data, size);
+  vkUnmapMemory(mDevice->getHandle(), mMemory);
 }
