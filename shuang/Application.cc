@@ -3,46 +3,27 @@
 #include "Vertex.h"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <spdlog/spdlog.h>
 
-struct vs_ubo_t {
-  alignas(16) glm::mat4 model;
-  alignas(16) glm::mat4 view;
-  alignas(16) glm::mat4 proj;
+struct alignas(16) vs_ubo_t {
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 proj;
 };
 
 Application::Application() { spdlog::set_level(spdlog::level::debug); }
 
 Application::~Application() { log_func; }
 
-float xOffset = 0;
-float xSpeed  = .1;
-float ySpeed  = .1;
-
 void Application::handleEvent(const InputEvent &inputEvent) {
   if (inputEvent.getSource() == InputEventSource::KEYBOARD) {
-    const auto &keyInputEvent = static_cast<const KeyInputEvent &>(inputEvent);
-    switch (auto code = keyInputEvent.getCode(); code) {
-    case KeyCode::ESCAPE:
-      mWindow->close();
-      break;
-
-    case KeyCode::LEFT: // move camera horizontally
-      xOffset -= .1;
-      break;
-    case KeyCode::RIGHT:
-      xOffset += .1;
-      break;
-
-    case KeyCode::UP: // move camera vertically
-    case KeyCode::DOWN:
-      break;
-
-    default:
-      log_warn("What should I do: key #{}, action #{} ?", code, keyInputEvent.getAction());
+    const auto &event = static_cast<const KeyInputEvent &>(inputEvent);
+    if (event.getAction() == KeyAction::UP && event.getCode() == KeyCode::ESCAPE) {
+      return mWindow->close();
     }
   }
+
+  mCamera->handleEvent(inputEvent);
 }
 
 void Application::resize(const int width, const int height) {
@@ -60,6 +41,8 @@ void Application::resize(const int width, const int height) {
   mSwapchain = std::make_shared<Swapchain>(mDevice, mSurface);
   mSwapchain->createFramebuffers(mRenderPass);
 }
+
+void Application::setFocus(bool focus) { mWindow->setFocused(focus); }
 
 void Application::mainLoop() {
   while (!mWindow->shouldClose()) {
@@ -80,7 +63,7 @@ void Application::mainLoop() {
       auto deltaTime   = currentTime - lastTime;
       auto fps         = frames / deltaTime;
 
-      log_debug("FPS {:.2f} {:.4f} ms", fps, deltaTime / frames * 1e3);
+      //      log_debug("FPS {:.2f} {:.4f} ms", fps, deltaTime / frames * 1e3);
 
       frames   = 0;
       lastTime = currentTime;
@@ -101,6 +84,9 @@ bool Application::setup(bool enableValidation) {
   mRenderPass     = std::make_shared<RenderPass>(mDevice, mSwapchain->getImageFormat());
   mSwapchain->createFramebuffers(mRenderPass);
 
+  mCamera = std::make_shared<Camera>();
+  mCamera->setPerspective(60.0f, (float)mWidth / (float)mHeight, 0.5f, 50.0f);
+
   initializeBuffers();
 
   mDescriptorSetLayout = std::make_shared<DescriptorSetLayout>(mDevice);
@@ -112,10 +98,6 @@ bool Application::setup(bool enableValidation) {
   auto bufferInfo = createDescriptorBufferInfo(mUniformBuffer->getHandle(), sizeof(vs_ubo_t));
   mDescriptorSet =
       std::make_shared<DescriptorSet>(mDevice, mDescriptorPool, 1, setLayouts, bufferInfo);
-
-  //  mCamera = std::make_shared<Camera>();
-  //  mCamera->setPosition(glm::vec3(0, 0, 2.f));
-  //  mCamera->setPerspective(60.0f, (float)mWidth / (float)mHeight, 1.0f, 256.0f);
 
   return true;
 }
@@ -131,6 +113,7 @@ void Application::initializeBuffers() {
       {{-.5f, .5f, .0f}, {1.0f, 0.0f, 0.0f}},
       {{.5f, .5f, .0f}, {0.0f, 1.0f, 0.0f}},
       {{.5f, -.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+      {{-.5f, -.5f, 0.0f}, {1.0f, 1.0f, 0.0f}},
   };
   auto size = vertices.size() * sizeof(Vertex);
 
@@ -143,7 +126,7 @@ void Application::initializeBuffers() {
   mVertexBuffer->copy(buf, mDevice->getGraphicsQueue());
 
   // Index buffer
-  const std::vector<uint32_t> indices = {0, 1, 2};
+  const std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
   size                                = indices.size() * sizeof(uint32_t);
 
   buf.reset();
@@ -171,27 +154,18 @@ void Application::updateUniformBuffer() {
   auto        time =
       std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-  auto cameraPos    = glm::vec3(.0f + xOffset, .0f, 3.0f);
-  auto cameraTarget = glm::vec3(.0f + xOffset, 0.0f, 0.0f);
-  //  auto cameraDir    = glm::normalize(cameraPos - cameraTarget);
-  auto cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-  //  auto cameraRight  = glm::normalize(glm::cross(cameraUp, cameraDir));
-  //  cameraUp          = glm::cross(cameraDir, cameraRight);
-
   vs_ubo_t ubo{};
-  //  ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f,
-  //  0.0f, 1.0f));
   ubo.model = glm::mat4(1.f);
-  ubo.view  = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-  ubo.proj  = glm::perspective(glm::radians(60.0f), mWidth / (float)mHeight, 0.1f, 10.0f);
-
-  //  log_debug("view matrix: {}", glm::to_string(ubo.view));
+  ubo.view  = mCamera->getViewMatrix();
+  ubo.proj  = mCamera->getProjectionMatrix();
 
   mUniformBuffer->copy(&ubo, sizeof(ubo));
 }
 
 void Application::update(float timeStep) {
   //  log_debug("time step {:.6f}", timeStep);
+
+  updateScene(timeStep);
 
   uint32_t imageIndex;
 
@@ -211,6 +185,8 @@ void Application::update(float timeStep) {
   vkAssert(render(imageIndex));
   vkAssert(present(imageIndex));
 }
+
+void Application::updateScene(float timeStep) { mCamera->update(timeStep); }
 
 VkResult Application::render(const uint32_t imageIndex) {
   auto &frame = mSwapchain->getFrames()[imageIndex];

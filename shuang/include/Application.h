@@ -27,9 +27,11 @@ public:
   void mainLoop();
   void handleEvent(const InputEvent &inputEvent);
   void resize(int width, int height);
+  void setFocus(bool focus);
 
 protected:
   virtual void     update(float timeStep);
+  void             updateScene(float timeStep);
   virtual VkResult render(uint32_t imageIndex);
   virtual VkResult present(uint32_t imageIndex);
 

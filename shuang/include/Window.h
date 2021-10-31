@@ -14,11 +14,14 @@ public:
   void close();
   void pollEvents();
 
-  VkSurfaceKHR      createSurface(VkInstance instance) const;
-  const VkExtent2D &getExtent() const { return mExtent; }
-  double            getTime() const;
+  VkSurfaceKHR                    createSurface(VkInstance instance) const;
+  [[nodiscard]] const VkExtent2D &getExtent() const { return mExtent; }
+  [[nodiscard]] double            getTime() const;
+  void                            setFocused(bool focused) { mFocused = focused; }
+  [[nodiscard]] bool              getFocused() const { return mFocused; }
 
 private:
-  VkExtent2D  mExtent;
-  GLFWwindow *mHandle = nullptr;
+  VkExtent2D  mExtent{};
+  GLFWwindow *mHandle  = nullptr;
+  bool        mFocused = false;
 };

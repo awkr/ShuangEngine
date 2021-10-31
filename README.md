@@ -12,8 +12,8 @@ but needs more refresh time when reconfiguring project.
 
 ## Camera movement & rotation
 
-1. [TODO] movement: use arrow keys to move camera along the local-space axis. when `option` pressed, camera will move
-   along the world-space axis.
+1. [TODO] movement: use `W` `S` `A` `D` to move camera along the local-space axis. when `option` pressed, camera will
+   move along the world-space axis.
 2. [TODO] rotation:
 
 ## Libraries used
@@ -25,4 +25,5 @@ but needs more refresh time when reconfiguring project.
 
 # [TODO]
 
-1. Camera: use Quaternion
+1. 抽象出 Timer 类
+2. Camera: use Quaternion

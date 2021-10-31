@@ -17,82 +17,105 @@ void errorCallback(int error, const char *description) {
 void windowCloseCallback(GLFWwindow *window) { glfwSetWindowShouldClose(window, GLFW_TRUE); }
 
 void windowSizeCallback(GLFWwindow *window, int width, int height) {
-  if (auto application = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
-    application->resize(width, height);
+  if (auto platform = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
+    platform->resize(width, height);
   }
 }
 
-void windowFocusCallback(GLFWwindow *window, int focused) {}
+void windowFocusCallback(GLFWwindow *window, int focused) {
+  if (auto platform = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
+    platform->setFocus(focused);
+  }
+}
+
+KeyCode mapKeyCode(int key) {
+  static const std::unordered_map<int, KeyCode> lookup = {
+      {GLFW_KEY_ESCAPE, KeyCode::ESCAPE}, {GLFW_KEY_UP, KeyCode::UP},
+      {GLFW_KEY_DOWN, KeyCode::DOWN},     {GLFW_KEY_LEFT, KeyCode::LEFT},
+      {GLFW_KEY_RIGHT, KeyCode::RIGHT},   {GLFW_KEY_H, KeyCode::H},
+      {GLFW_KEY_L, KeyCode::L},           {GLFW_KEY_J, KeyCode::J},
+      {GLFW_KEY_K, KeyCode::K},           {GLFW_KEY_W, KeyCode::W},
+      {GLFW_KEY_R, KeyCode::R},           {GLFW_KEY_S, KeyCode::S},
+      {GLFW_KEY_A, KeyCode::A},           {GLFW_KEY_D, KeyCode::D},
+      {GLFW_KEY_Q, KeyCode::Q},           {GLFW_KEY_E, KeyCode::E},
+      {GLFW_KEY_F, KeyCode::F},           {GLFW_KEY_I, KeyCode::I},
+      {GLFW_KEY_U, KeyCode::U},           {GLFW_KEY_O, KeyCode::O},
+      {GLFW_KEY_F5, KeyCode::F5},
+  };
+  auto iter = lookup.find(key);
+  if (iter == lookup.end()) {
+    return KeyCode::UNKNOWN;
+  }
+  return iter->second;
+}
+
+KeyAction mapKeyAction(int action) {
+  static const std::unordered_map<int, KeyAction> lookup = {
+      {GLFW_PRESS, KeyAction::DOWN},
+      {GLFW_RELEASE, KeyAction::UP},
+      {GLFW_REPEAT, KeyAction::REPEAT},
+  };
+  auto iter = lookup.find(action);
+  if (iter == lookup.end()) {
+    return KeyAction::UNKNOWN;
+  }
+  return iter->second;
+}
+
+MouseAction mapMouseAction(int action) {
+  static const std::unordered_map<int, MouseAction> lookup = {
+      {GLFW_PRESS, MouseAction::DOWN},
+      {GLFW_RELEASE, MouseAction::UP},
+  };
+  auto iter = lookup.find(action);
+  if (iter == lookup.end()) {
+    return MouseAction::UNKNOWN;
+  }
+  return iter->second;
+}
+
+MouseButton mapMouseButton(int button) {
+  static const std::unordered_map<int, MouseButton> lookup = {
+      {GLFW_MOUSE_BUTTON_1, MouseButton::LEFT},    {GLFW_MOUSE_BUTTON_2, MouseButton::RIGHT},
+      {GLFW_MOUSE_BUTTON_3, MouseButton::MIDDLE},  {GLFW_MOUSE_BUTTON_4, MouseButton::BACK},
+      {GLFW_MOUSE_BUTTON_5, MouseButton::FORWARD},
+  };
+  auto iter = lookup.find(button);
+  if (iter == lookup.end()) {
+    return MouseButton::UNKNOWN;
+  }
+  return iter->second;
+}
 
 void keyCallback(GLFWwindow *window, int key, int /* scancode */, int action, int /* mods */) {
-  auto application = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
-  if (!application) {
-    return;
-  }
+  if (auto platform = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
+    auto keyCode   = mapKeyCode(key);
+    auto keyAction = mapKeyAction(action);
 
-  KeyCode keyCode;
-  switch (key) {
-  case GLFW_KEY_ESCAPE:
-    keyCode = KeyCode::ESCAPE;
-    break;
-  case GLFW_KEY_UP:
-    keyCode = KeyCode::UP;
-    break;
-  case GLFW_KEY_DOWN:
-    keyCode = KeyCode::DOWN;
-    break;
-  case GLFW_KEY_LEFT:
-    keyCode = KeyCode::LEFT;
-    break;
-  case GLFW_KEY_RIGHT:
-    keyCode = KeyCode::RIGHT;
-    break;
-  case GLFW_KEY_H:
-    keyCode = KeyCode::H;
-    break;
-  case GLFW_KEY_L:
-    keyCode = KeyCode::L;
-    break;
-  case GLFW_KEY_J:
-    keyCode = KeyCode::J;
-    break;
-  case GLFW_KEY_K:
-    keyCode = KeyCode::K;
-    break;
-  case GLFW_KEY_W:
-    keyCode = KeyCode::W;
-    break;
-  case GLFW_KEY_S:
-    keyCode = KeyCode::S;
-    break;
-  case GLFW_KEY_A:
-    keyCode = KeyCode::A;
-    break;
-  case GLFW_KEY_D:
-    keyCode = KeyCode::D;
-    break;
-  default:
-    keyCode = KeyCode::NONE;
+    platform->handleEvent(KeyInputEvent{keyCode, keyAction});
   }
-
-  KeyAction keyAction;
-  switch (action) {
-  case GLFW_PRESS:
-    keyAction = KeyAction::DOWN;
-    break;
-  case GLFW_RELEASE:
-    keyAction = KeyAction::UP;
-    break;
-  default:
-    keyAction = KeyAction::NONE;
-  }
-
-  application->handleEvent(KeyInputEvent{keyCode, keyAction});
 }
 
-void cursorPosCallback(GLFWwindow *window, double xPos, double yPos) {}
+void cursorPosCallback(GLFWwindow *window, double xPos, double yPos) {
+  if (auto platform = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
+    platform->handleEvent(MouseButtonInputEvent{MouseButton::UNKNOWN, MouseAction::MOVE,
+                                                static_cast<float>(xPos),
+                                                static_cast<float>(yPos)});
+  }
+}
 
-void mouseButtonCallback(GLFWwindow *window, int button, int action, int /* mods */) {}
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods) {
+  if (auto platform = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+
+    auto mouseButton = mapMouseButton(button);
+    auto mouseAction = mapMouseAction(action);
+
+    platform->handleEvent(MouseButtonInputEvent{mouseButton, mouseAction, static_cast<float>(x),
+                                                static_cast<float>(y)});
+  }
+}
 
 } // namespace
 
@@ -124,6 +147,8 @@ Window::Window(const Application *application, int width, int height, const char
 
   mExtent.width  = width;
   mExtent.height = height;
+
+  mFocused = true;
 }
 
 Window::~Window() {
