@@ -29,7 +29,7 @@ public:
   void resize(int width, int height);
 
 protected:
-  virtual void     update();
+  virtual void     update(float timeStep);
   virtual VkResult render(uint32_t imageIndex);
   virtual VkResult present(uint32_t imageIndex);
 

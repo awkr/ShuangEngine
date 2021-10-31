@@ -96,13 +96,17 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int /* mods
 
 } // namespace
 
-Window::Window(const Application *application, uint32_t width, uint32_t height, const char *title) {
+Window::Window(const Application *application, int width, int height, const char *title) {
   if (!glfwInit()) {
     throw std::runtime_error("Failed to init GLFW");
   }
 
   glfwSetErrorCallback(errorCallback);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+  //  auto       *monitor = glfwGetPrimaryMonitor();
+  //  const auto *mode    = glfwGetVideoMode(monitor);
+  //  glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
   if (mHandle = glfwCreateWindow(width, height, title, nullptr, nullptr); !mHandle) {
     throw std::runtime_error("Failed to create GLFW");

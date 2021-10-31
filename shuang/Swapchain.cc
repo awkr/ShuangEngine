@@ -58,13 +58,22 @@ Swapchain::Swapchain(const std::shared_ptr<Device> &device, const std::shared_pt
     mImageExtent.height = surface->getExtent().height;
   }
 
+  uint32_t presentModesCount;
+  vkGetPhysicalDeviceSurfacePresentModesKHR(device->getPhysicalDevice()->getHandle(),
+                                            surface->getHandle(), &presentModesCount, nullptr);
+  std::vector<VkPresentModeKHR> presentModes(presentModesCount);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(device->getPhysicalDevice()->getHandle(),
+                                            surface->getHandle(), &presentModesCount,
+                                            presentModes.data());
+
   // FIFO must be supported by all implementations.
   VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
 
   // Determine the number of VkImage's to use in the swapchain.
   // Ideally, we desire to own 1 image at a time, the rest of the images can
   // either be rendered to and/or being queued up for display.
-  uint32_t desiredImages = capabilities.minImageCount + 1;
+  // uint32_t desiredImages = capabilities.minImageCount + 1; // TODO FPS will be 120, yah !
+  uint32_t desiredImages = 2;
   if (capabilities.maxImageCount > 0 && desiredImages > capabilities.maxImageCount) {
     // Application must settle for fewer images than desired.
     desiredImages = capabilities.maxImageCount;

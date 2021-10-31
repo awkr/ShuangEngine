@@ -17,6 +17,8 @@ Application::Application() { spdlog::set_level(spdlog::level::debug); }
 Application::~Application() { log_func; }
 
 float xOffset = 0;
+float xSpeed  = .1;
+float ySpeed  = .1;
 
 void Application::handleEvent(const InputEvent &inputEvent) {
   if (inputEvent.getSource() == InputEventSource::KEYBOARD) {
@@ -27,10 +29,10 @@ void Application::handleEvent(const InputEvent &inputEvent) {
       break;
 
     case KeyCode::LEFT: // move camera horizontally
-      xOffset -= 10;
+      xOffset -= .1;
       break;
     case KeyCode::RIGHT:
-      xOffset += 10;
+      xOffset += .1;
       break;
 
     case KeyCode::UP: // move camera vertically
@@ -61,8 +63,28 @@ void Application::resize(const int width, const int height) {
 
 void Application::mainLoop() {
   while (!mWindow->shouldClose()) {
-    update();
+    static int  frames   = 0;
+    static auto lastTime = mWindow->getTime();
+
+    { // update
+      static auto lastTime    = mWindow->getTime();
+      auto        currentTime = mWindow->getTime();
+      update(static_cast<float>(currentTime - lastTime));
+      lastTime = currentTime;
+    }
+
     mWindow->pollEvents();
+
+    if (++frames >= 60) {
+      auto currentTime = mWindow->getTime();
+      auto deltaTime   = currentTime - lastTime;
+      auto fps         = frames / deltaTime;
+
+      log_debug("FPS {:.2f} {:.4f} ms", fps, deltaTime / frames * 1e3);
+
+      frames   = 0;
+      lastTime = currentTime;
+    }
   }
   mDevice->waitIdle();
 }
@@ -149,8 +171,8 @@ void Application::updateUniformBuffer() {
   auto        time =
       std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-  auto cameraPos    = glm::vec3(.0f, .0f, 3.0f);
-  auto cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+  auto cameraPos    = glm::vec3(.0f + xOffset, .0f, 3.0f);
+  auto cameraTarget = glm::vec3(.0f + xOffset, 0.0f, 0.0f);
   //  auto cameraDir    = glm::normalize(cameraPos - cameraTarget);
   auto cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
   //  auto cameraRight  = glm::normalize(glm::cross(cameraUp, cameraDir));
@@ -168,7 +190,9 @@ void Application::updateUniformBuffer() {
   mUniformBuffer->copy(&ubo, sizeof(ubo));
 }
 
-void Application::update() {
+void Application::update(float timeStep) {
+  //  log_debug("time step {:.6f}", timeStep);
+
   uint32_t imageIndex;
 
   auto result = mSwapchain->acquireNextImage(imageIndex);

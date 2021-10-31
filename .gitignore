@@ -5,3 +5,5 @@
 # CMake related
 build/
 cmake-build-debug/
+
+*.log
