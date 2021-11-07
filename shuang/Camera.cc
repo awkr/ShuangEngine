@@ -25,22 +25,26 @@ void Camera::handleEvent(const InputEvent &inputEvent) {
     } else {
       mKeyPressed[event.getCode()] = false;
     }
-  } /*  else if (inputEvent.getSource() == InputEventSource::MOUSE) {
+  } else if (inputEvent.getSource() == InputEventSource::MOUSE) {
     const auto &event = static_cast<const MouseButtonInputEvent &>(inputEvent);
 
-    glm::vec2        pos{std::floor(event.getX()), std::floor(event.getY())};
-    static glm::vec2 lastPos{0.f};
+    if (event.getAction() == MouseAction::SCROLL) {
+      mMouseScrollDelta = std::floor(event.getY());
+    } else {
+      glm::vec2        pos{std::floor(event.getX()), std::floor(event.getY())};
+      static glm::vec2 lastPos{0.f};
 
-    if (event.getAction() == MouseAction::DOWN) {
-      mMouseButtonPressed[event.getButton()] = true;
-      //      lastPos                                = pos;
-    } else if (event.getAction() == MouseAction::UP) {
-      mMouseButtonPressed[event.getButton()] = false;
-    } else if (event.getAction() == MouseAction::MOVE) {
-      mMouseMoveDelta = pos - lastPos;
-      lastPos         = pos;
+      if (event.getAction() == MouseAction::DOWN) {
+        mMouseButtonPressed[event.getButton()] = true;
+        lastPos                                = pos;
+      } else if (event.getAction() == MouseAction::UP) {
+        mMouseButtonPressed[event.getButton()] = false;
+      } else if (event.getAction() == MouseAction::MOVE) {
+        mMouseMoveDelta = pos - lastPos;
+        lastPos         = pos;
+      }
     }
-  } */
+  }
 }
 
 void Camera::update(float timeStep) {
@@ -66,6 +70,11 @@ void Camera::update(float timeStep) {
   }
   if (mKeyPressed[KeyCode::E]) {
     rotation.z -= mRotateSpeed;
+  }
+
+  if (mMouseButtonPressed[MouseButton::LEFT]) {
+    rotation.x += 0.2f * mMouseMoveDelta.y;
+    rotation.y += 0.2f * -mMouseMoveDelta.x;
   }
 
   rotation *= timeStep;
@@ -118,6 +127,12 @@ void Camera::update(float timeStep) {
     movement.y += mMoveSpeed;
   }
 
+  if (mMouseButtonPressed[MouseButton::RIGHT]) {
+    movement.x += 0.25f * mMouseMoveDelta.x;
+    movement.y += 0.25f * mMouseMoveDelta.y;
+  }
+  movement.z += mMouseScrollDelta;
+
   movement *= timeStep;
 
   mPosition += movement * glm::conjugate(mRotation);
@@ -127,6 +142,9 @@ void Camera::update(float timeStep) {
   }
 
   updateViewMatrix();
+
+  mMouseMoveDelta   = {0.0f, 0.0f};
+  mMouseScrollDelta = 0.0f;
 }
 
 void Camera::updateViewMatrix() {

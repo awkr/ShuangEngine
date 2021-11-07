@@ -52,7 +52,7 @@ private:
 };
 
 enum class MouseButton { UNKNOWN, LEFT, RIGHT, MIDDLE, BACK, FORWARD };
-enum class MouseAction { UNKNOWN, DOWN, UP, MOVE };
+enum class MouseAction { UNKNOWN, DOWN, UP, MOVE, SCROLL };
 
 class MouseButtonInputEvent : public InputEvent {
 public:

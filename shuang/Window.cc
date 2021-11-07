@@ -117,6 +117,14 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods) {
   }
 }
 
+void onScroll(GLFWwindow *window, double xOffset, double yOffset) {
+  if (auto platform = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window))) {
+    platform->handleEvent(MouseButtonInputEvent{MouseButton::MIDDLE, MouseAction::SCROLL,
+                                                static_cast<float>(xOffset),
+                                                static_cast<float>(yOffset)});
+  }
+}
+
 } // namespace
 
 Window::Window(const Application *application, int width, int height, const char *title) {
@@ -144,6 +152,7 @@ Window::Window(const Application *application, int width, int height, const char
   glfwSetKeyCallback(mHandle, keyCallback);
   glfwSetCursorPosCallback(mHandle, cursorPosCallback);
   glfwSetMouseButtonCallback(mHandle, mouseButtonCallback);
+  glfwSetScrollCallback(mHandle, onScroll);
 
   mExtent.width  = width;
   mExtent.height = height;

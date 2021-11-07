@@ -50,6 +50,8 @@ private:
 
   std::unordered_map<KeyCode, bool>     mKeyPressed;
   std::unordered_map<MouseButton, bool> mMouseButtonPressed;
+  glm::vec2                             mMouseMoveDelta{0.0f};
+  float                                 mMouseScrollDelta{0.0f};
 
   glm::vec3 mForward{0.0f, 0.0f, 1.0f};
   // In Vulkan, Y direction is downstairs
