@@ -12,9 +12,12 @@ but needs more refresh time when reconfiguring project.
 
 ## Camera movement & rotation
 
-1. [TODO] movement: use `W` `S` `A` `D` to move camera along the local-space axis. when `option` pressed, camera will
-   move along the world-space axis.
-2. [TODO] rotation:
+1. `W`, `S`, mouse scroll: move forward and back
+2. `A`, `D`, mouse moves horizontally with right button: move left and right
+3. `R`, `F`, mouse moves vertically with right button: move up and down
+4. `Q`, `E`: roll
+5. `Up`, `Down`, mouse moves vertically with left button: pitch
+6. `Left`, `Right`, mouse moves horizontally with left button: yaw
 
 ## Libraries used
 
@@ -26,4 +29,3 @@ but needs more refresh time when reconfiguring project.
 # [TODO]
 
 1. 抽象出 Timer 类
-2. Camera: use Quaternion
