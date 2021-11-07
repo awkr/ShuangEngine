@@ -1,5 +1,7 @@
 #include "Application.h"
+#include "FreeCamera.h"
 #include "Macros.h"
+#include "OrbitCamera.h"
 #include "Vertex.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -63,7 +65,7 @@ void Application::mainLoop() {
       auto deltaTime   = currentTime - lastTime;
       auto fps         = frames / deltaTime;
 
-      //      log_debug("FPS {:.2f} {:.4f} ms", fps, deltaTime / frames * 1e3);
+      log_debug("FPS {:.2f} {:.4f} ms", fps, deltaTime / frames * 1e3);
 
       frames   = 0;
       lastTime = currentTime;
@@ -84,7 +86,8 @@ bool Application::setup(bool enableValidation) {
   mRenderPass     = std::make_shared<RenderPass>(mDevice, mSwapchain->getImageFormat());
   mSwapchain->createFramebuffers(mRenderPass);
 
-  mCamera = std::make_shared<Camera>();
+  //  mCamera = std::make_shared<FreeCamera>();
+  mCamera = std::make_shared<OrbitCamera>();
   mCamera->setPerspective(60.0f, (float)mWidth / (float)mHeight, 0.5f, 50.0f);
 
   initializeBuffers();
@@ -110,10 +113,11 @@ void Application::initializeBuffers() {
       //      {{1.f, 1.f, 0.0f}, {0.0f, 0.0f, 1.0f}},
       //      {{-1.f, 1.f, 0.0f}, {1.0f, 1.0f, 1.0f}},
 
-      {{-.5f, .5f, .0f}, {1.0f, 0.0f, 0.0f}},
-      {{.5f, .5f, .0f}, {0.0f, 1.0f, 0.0f}},
-      {{.5f, -.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-      {{-.5f, -.5f, 0.0f}, {1.0f, 1.0f, 0.0f}},
+      {{-.5f, .5f, .0f}, {1.0f, 0.0f, 0.0f}},   //
+      {{.5f, .5f, .0f}, {0.0f, 1.0f, 0.0f}},    //
+      {{.5f, -.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},  //
+      {{-.5f, -.5f, 0.0f}, {1.0f, 1.0f, 0.0f}}, //
+      {{.5f, .5f, .5f}, {1.0f, 1.0f, 1.0f}},    //
   };
   auto size = vertices.size() * sizeof(Vertex);
 

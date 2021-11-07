@@ -48,7 +48,8 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
   // Specify rasterization state.
   VkPipelineRasterizationStateCreateInfo rasterizationState{
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
-  rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
+  //  rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizationState.cullMode = VK_CULL_MODE_NONE;
   //  rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizationState.frontFace = VK_FRONT_FACE_CLOCKWISE;
   rasterizationState.lineWidth = 1.0f;

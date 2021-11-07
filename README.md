@@ -10,7 +10,7 @@ but needs more refresh time when reconfiguring project.
 
 # User manual
 
-## Camera movement & rotation
+## FreeCamera ( FPS with roll ) movement & rotation
 
 1. `W`, `S`, mouse scroll: move forward and back
 2. `A`, `D`, mouse moves horizontally with right button: move left and right
@@ -18,6 +18,8 @@ but needs more refresh time when reconfiguring project.
 4. `Q`, `E`: roll
 5. `Up`, `Down`, mouse moves vertically with left button: pitch
 6. `Left`, `Right`, mouse moves horizontally with left button: yaw
+
+## [TODO] OrbitCamera movement & rotation
 
 ## Libraries used
 
