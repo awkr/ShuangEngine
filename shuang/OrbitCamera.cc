@@ -85,8 +85,8 @@ void OrbitCamera::update(float timeStep) {
   }
 
   if (mMouseButtonPressed[MouseButton::RIGHT]) {
-    movement.x -= 0.25f * mMouseMoveDelta.x;
-    movement.y -= 0.25f * mMouseMoveDelta.y;
+    movement.x -= 0.5f * mMouseMoveDelta.x;
+    movement.y -= 0.5f * mMouseMoveDelta.y;
   }
   movement.z += 1.2f * mMouseScrollDelta;
 
