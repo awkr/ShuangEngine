@@ -10,6 +10,8 @@ OrbitCamera::OrbitCamera(const glm::vec3 &position, const glm::vec3 &target) : C
   const auto right   = glm::cross(forward, up);
   up                 = glm::cross(right, forward);
   mRotation          = glm::quatLookAt(forward, up);
+
+  updateViewMatrix();
 }
 
 OrbitCamera::~OrbitCamera() { log_func; }
@@ -104,11 +106,6 @@ void OrbitCamera::update(float timeStep) {
 
   mMouseMoveDelta   = {0.0f, 0.0f};
   mMouseScrollDelta = 0.0f;
-}
-
-void OrbitCamera::updateViewMatrix() {
-  mViewMatrix =
-      glm::inverse(glm::translate(glm::mat4(1.0f), mPosition) * glm::mat4_cast(mRotation));
 }
 
 void OrbitCamera::resetTransform() {}

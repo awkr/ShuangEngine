@@ -12,7 +12,6 @@ public:
   void update(float timeStep) override;
 
 protected:
-  void updateViewMatrix() override;
   void resetTransform() override;
 
 private:

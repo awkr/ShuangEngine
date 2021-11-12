@@ -27,8 +27,8 @@ public:
   virtual void update(float timeStep);
 
 protected:
-  virtual void updateViewMatrix();
-  void         updateProjectionMatrix();
+  void updateViewMatrix();
+  void updateProjectionMatrix();
   // Reset position and rotation
   virtual void resetTransform() {}
 
