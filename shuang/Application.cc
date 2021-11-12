@@ -41,6 +41,7 @@ void Application::resize(const int width, const int height) {
 
   mSwapchain.reset();
   mSwapchain = std::make_shared<Swapchain>(mDevice, mSurface);
+  mSwapchain->createDepthStencil();
   mSwapchain->createFramebuffers(mRenderPass);
 }
 
@@ -83,7 +84,9 @@ bool Application::setup(bool enableValidation) {
   mDevice         = std::make_shared<Device>(mPhysicalDevice, mSurface);
   mSwapchain      = std::make_shared<Swapchain>(mDevice, mSurface);
   auto imageCount = mSwapchain->getImageCount();
-  mRenderPass     = std::make_shared<RenderPass>(mDevice, mSwapchain->getImageFormat());
+  mRenderPass     = std::make_shared<RenderPass>(mDevice, mSwapchain->getImageFormat(),
+                                             mSwapchain->getDepthFormat());
+  mSwapchain->createDepthStencil();
   mSwapchain->createFramebuffers(mRenderPass);
 
   //  mCamera = std::make_shared<FreeCamera>();
@@ -245,8 +248,9 @@ VkResult Application::render(const uint32_t imageIndex) {
   vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
 
   // Set clear color values.
-  VkClearValue clearValue;
-  clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  std::array<VkClearValue, 2> clearValues{};
+  clearValues[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  clearValues[1].depthStencil = {1.0f, 0};
 
   // Begin the render pass.
   VkRenderPassBeginInfo renderPassBeginInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
@@ -254,8 +258,8 @@ VkResult Application::render(const uint32_t imageIndex) {
   renderPassBeginInfo.framebuffer              = framebuffer;
   renderPassBeginInfo.renderArea.extent.width  = mSwapchain->getImageExtent().width;
   renderPassBeginInfo.renderArea.extent.height = mSwapchain->getImageExtent().height;
-  renderPassBeginInfo.clearValueCount          = 1;
-  renderPassBeginInfo.pClearValues             = &clearValue;
+  renderPassBeginInfo.clearValueCount          = clearValues.size();
+  renderPassBeginInfo.pClearValues             = clearValues.data();
   // We will add draw commands in the same command buffer.
   vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 

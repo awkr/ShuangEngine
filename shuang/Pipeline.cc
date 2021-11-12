@@ -70,9 +70,15 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
   viewportStateCreateInfo.viewportCount = 1;
   viewportStateCreateInfo.scissorCount  = 1;
 
-  // Disable all depth testing.
-  VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{
+  VkPipelineDepthStencilStateCreateInfo depthStencilState{
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
+  depthStencilState.depthTestEnable       = VK_TRUE;
+  depthStencilState.depthWriteEnable      = VK_TRUE;
+  depthStencilState.depthCompareOp        = VK_COMPARE_OP_LESS;
+  depthStencilState.depthBoundsTestEnable = VK_FALSE;
+  depthStencilState.minDepthBounds        = 0.0f;
+  depthStencilState.maxDepthBounds        = 1.0f;
+  depthStencilState.stencilTestEnable     = VK_FALSE;
 
   // No multisampling.
   VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo{
@@ -112,7 +118,7 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
   pipelineCreateInfo.pColorBlendState    = &colorBlendStateCreateInfo;
   pipelineCreateInfo.pMultisampleState   = &multisampleStateCreateInfo;
   pipelineCreateInfo.pViewportState      = &viewportStateCreateInfo;
-  pipelineCreateInfo.pDepthStencilState  = &depthStencilStateCreateInfo;
+  pipelineCreateInfo.pDepthStencilState  = &depthStencilState;
   pipelineCreateInfo.pDynamicState       = &dynamicStateCreateInfo;
 
   // We need to specify the pipeline layout and the render pass description up front as well.

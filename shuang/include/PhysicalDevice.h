@@ -11,6 +11,11 @@ public:
   const VkPhysicalDeviceProperties       &getProperties() const { return mProperties; }
   const VkPhysicalDeviceFeatures         &getFeatures() const { return mFeatures; }
   const VkPhysicalDeviceMemoryProperties &getMemoryProperties() const { return mMemoryProperties; }
+  VkFormat getSuitableDepthFormat(bool depthOnly = true, const std::vector<VkFormat> &formats = {
+                                                             VK_FORMAT_D32_SFLOAT,
+                                                             VK_FORMAT_D24_UNORM_S8_UINT,
+                                                             VK_FORMAT_D16_UNORM,
+                                                         }) const;
 
   /**
    * @brief Checks that a given memory type is supported by the GPU
@@ -23,6 +28,8 @@ public:
                          VkBool32 *found = nullptr);
 
 private:
+  [[nodiscard]] static bool isDepthOnlyFormat(VkFormat format);
+
   VkPhysicalDevice                 mHandle;
   VkPhysicalDeviceProperties       mProperties;
   VkPhysicalDeviceFeatures         mFeatures;

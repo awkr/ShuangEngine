@@ -150,6 +150,8 @@ Swapchain::Swapchain(const std::shared_ptr<Device> &device, const std::shared_pt
   for (size_t i = 0; i < mImageCount; ++i) {
     initFrame(mFrames[i]);
   }
+
+  mDepthFormat = mDevice->getPhysicalDevice()->getSuitableDepthFormat();
 }
 
 Swapchain::~Swapchain() {
@@ -167,6 +169,10 @@ Swapchain::~Swapchain() {
     vkDestroyCommandPool(mDevice->getHandle(), frame.primaryCommandPool, nullptr);
     vkDestroyFence(mDevice->getHandle(), frame.queueSubmittedFence, nullptr);
   }
+
+  vkDestroyImageView(mDevice->getHandle(), mDepthStencil.view, nullptr);
+  vkDestroyImage(mDevice->getHandle(), mDepthStencil.image, nullptr);
+  vkFreeMemory(mDevice->getHandle(), mDepthStencil.memory, nullptr);
 
   cleanupFramebuffers();
 
@@ -199,21 +205,69 @@ void Swapchain::initFrame(Frame &frame) {
 }
 
 void Swapchain::createFramebuffers(const std::shared_ptr<RenderPass> &renderPass) {
+  VkImageView attachments[2];
+  attachments[1] = mDepthStencil.view; // Depth/Stencil attachment is the same for all framebuffers
+
+  // Build the framebuffer.
+  VkFramebufferCreateInfo framebufferCreateInfo{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+  framebufferCreateInfo.renderPass      = renderPass->getHandle();
+  framebufferCreateInfo.attachmentCount = 2;
+  framebufferCreateInfo.pAttachments    = attachments;
+  framebufferCreateInfo.width           = mImageExtent.width;
+  framebufferCreateInfo.height          = mImageExtent.height;
+  framebufferCreateInfo.layers          = 1;
+
   for (const auto &imageView : mImageViews) {
-    // Build the framebuffer.
-    VkFramebufferCreateInfo framebufferCreateInfo{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-    framebufferCreateInfo.renderPass      = renderPass->getHandle();
-    framebufferCreateInfo.attachmentCount = 1;
-    framebufferCreateInfo.pAttachments    = &imageView;
-    framebufferCreateInfo.width           = mImageExtent.width;
-    framebufferCreateInfo.height          = mImageExtent.height;
-    framebufferCreateInfo.layers          = 1;
+    attachments[0] = imageView;
 
     VkFramebuffer framebuffer;
     vkAssert(
         vkCreateFramebuffer(mDevice->getHandle(), &framebufferCreateInfo, nullptr, &framebuffer));
     mFramebuffers.push_back(framebuffer);
   }
+}
+
+void Swapchain::createDepthStencil() {
+  VkImageCreateInfo imageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+  imageCreateInfo.imageType   = VK_IMAGE_TYPE_2D;
+  imageCreateInfo.format      = mDepthFormat;
+  imageCreateInfo.extent      = {mImageExtent.width, mImageExtent.height, 1};
+  imageCreateInfo.mipLevels   = 1;
+  imageCreateInfo.arrayLayers = 1;
+  imageCreateInfo.samples     = VK_SAMPLE_COUNT_1_BIT;
+  imageCreateInfo.tiling      = VK_IMAGE_TILING_OPTIMAL;
+  imageCreateInfo.usage =
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+
+  vkAssert(vkCreateImage(mDevice->getHandle(), &imageCreateInfo, nullptr, &mDepthStencil.image));
+
+  VkMemoryRequirements memoryRequirements{};
+  vkGetImageMemoryRequirements(mDevice->getHandle(), mDepthStencil.image, &memoryRequirements);
+
+  VkMemoryAllocateInfo memoryAllocation{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+  memoryAllocation.allocationSize  = memoryRequirements.size;
+  memoryAllocation.memoryTypeIndex = mDevice->getPhysicalDevice()->getMemoryType(
+      memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  vkAssert(
+      vkAllocateMemory(mDevice->getHandle(), &memoryAllocation, nullptr, &mDepthStencil.memory));
+  vkAssert(vkBindImageMemory(mDevice->getHandle(), mDepthStencil.image, mDepthStencil.memory, 0));
+
+  VkImageViewCreateInfo imageViewCreateInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+  imageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+  imageViewCreateInfo.image                           = mDepthStencil.image;
+  imageViewCreateInfo.format                          = mDepthFormat;
+  imageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+  imageViewCreateInfo.subresourceRange.levelCount     = 1;
+  imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+  imageViewCreateInfo.subresourceRange.layerCount     = 1;
+  imageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
+  // Stencil aspect should only be set on depth + stencil formats: VK_FORMAT_D16_UNORM_S8_UINT,
+  // VK_FORMAT_D32_SFLOAT_S8_UINT
+  if (mDepthFormat >= VK_FORMAT_D16_UNORM_S8_UINT) {
+    imageViewCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+  }
+  vkAssert(
+      vkCreateImageView(mDevice->getHandle(), &imageViewCreateInfo, nullptr, &mDepthStencil.view));
 }
 
 void Swapchain::cleanupFramebuffers() {

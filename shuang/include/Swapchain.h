@@ -22,6 +22,7 @@ public:
 
   const VkSwapchainKHR           &getHandle() const { return mHandle; }
   const VkFormat                 &getImageFormat() const { return mImageFormat; }
+  const VkFormat                 &getDepthFormat() const { return mDepthFormat; }
   uint32_t                        getImageCount() const { return mImageCount; }
   const std::vector<VkImage>     &getImages() const { return mImages; }
   const std::vector<VkImageView> &getImageViews() const { return mImageViews; }
@@ -30,6 +31,7 @@ public:
   std::vector<VkFramebuffer>     &getFramebuffers() { return mFramebuffers; }
 
   void     createFramebuffers(const std::shared_ptr<RenderPass> &renderPass);
+  void     createDepthStencil();
   VkResult acquireNextImage(uint32_t &imageIndex);
 
 private:
@@ -39,6 +41,7 @@ private:
   const std::shared_ptr<Device> &mDevice = nullptr;
   VkExtent2D                     mImageExtent;
   VkFormat                       mImageFormat;
+  VkFormat                       mDepthFormat;
   VkSwapchainKHR                 mHandle;
   uint32_t                       mImageCount;
   std::vector<VkImage>           mImages;
@@ -47,4 +50,10 @@ private:
   std::vector<VkSemaphore>       mSemaphorePool;
   // Framebuffers for each image view
   std::vector<VkFramebuffer> mFramebuffers;
+
+  struct {
+    VkImage        image;
+    VkDeviceMemory memory;
+    VkImageView    view;
+  } mDepthStencil;
 };
