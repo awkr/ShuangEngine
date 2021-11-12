@@ -45,6 +45,7 @@ private:
   void                          updateUniformBuffer();
   static VkDescriptorBufferInfo createDescriptorBufferInfo(VkBuffer buffer, VkDeviceSize range,
                                                            VkDeviceSize offset = 0);
+  void drawObject(const VkCommandBuffer &commandBuffer, const VkBuffer &vertexBuffer);
 
   std::shared_ptr<Window>              mWindow              = nullptr;
   std::shared_ptr<Instance>            mInstance            = nullptr;
