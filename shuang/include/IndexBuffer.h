@@ -8,7 +8,7 @@ public:
               VkMemoryPropertyFlags properties, uint32_t indexCount, VkDeviceSize size,
               void *data = nullptr);
 
-  uint32_t getIndexCount() const { return mIndexCount; }
+  [[nodiscard]] uint32_t getIndexCount() const { return mIndexCount; }
 
 private:
   uint32_t mIndexCount;

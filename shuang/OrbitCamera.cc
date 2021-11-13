@@ -80,10 +80,10 @@ void OrbitCamera::update(float timeStep) {
   }
 
   if (mKeyPressed[KeyCode::R]) {
-    movement.y += mMoveSpeed;
+    movement.y -= mMoveSpeed;
   }
   if (mKeyPressed[KeyCode::F]) {
-    movement.y -= mMoveSpeed;
+    movement.y += mMoveSpeed;
   }
 
   if (mMouseButtonPressed[MouseButton::RIGHT]) {

@@ -17,6 +17,8 @@
 #include "UniformBuffer.h"
 #include "VertexBuffer.h"
 #include "Window.h"
+#include "model/Cube.h"
+#include "model/Triangle.h"
 
 class Application {
 public:
@@ -42,12 +44,12 @@ protected:
   uint32_t    mHeight = 360;
 
 private:
-  // create & initialize vertex / index buffer; create uniform buffer
-  virtual void                  initializeBuffers();
+  // load models; create uniform buffer
+  virtual void                  initializeModels();
   void                          updateUniformBuffer();
   static VkDescriptorBufferInfo createDescriptorBufferInfo(VkBuffer buffer, VkDeviceSize range,
                                                            VkDeviceSize offset = 0);
-  void drawObject(const VkCommandBuffer &commandBuffer, const VkBuffer &vertexBuffer);
+  static void                   drawModel(const VkCommandBuffer &commandBuffer, const Model *model);
 
   std::shared_ptr<Window>              mWindow              = nullptr;
   std::shared_ptr<Instance>            mInstance            = nullptr;
@@ -60,9 +62,8 @@ private:
   std::shared_ptr<DescriptorSet>       mDescriptorSet       = nullptr;
   std::shared_ptr<DescriptorPool>      mDescriptorPool      = nullptr;
   std::shared_ptr<Pipeline>            mPipeline            = nullptr;
-  std::shared_ptr<VertexBuffer>        mVertexBuffer        = nullptr;
-  std::shared_ptr<IndexBuffer>         mIndexBuffer         = nullptr;
-  std::shared_ptr<UniformBuffer>       mUniformBuffer       = nullptr;
+  std::unique_ptr<UniformBuffer>       mUniformBuffer       = nullptr;
+  std::vector<std::unique_ptr<Model>>  mModels;
 
   std::shared_ptr<Camera> mCamera;
 };
