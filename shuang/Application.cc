@@ -13,7 +13,7 @@ struct alignas(16) vs_ubo_t {
   glm::mat4 proj;
 };
 
-Application::Application() { spdlog::set_level(spdlog::level::debug); }
+Application::Application(const Setting &setting) { spdlog::set_level(spdlog::level::debug); }
 
 Application::~Application() { log_func; }
 
@@ -207,10 +207,6 @@ void Application::updateUniformBuffer() {
 }
 
 void Application::update(float timeStep) {
-  //  log_debug("time step {:.6f}", timeStep);
-
-  updateScene(timeStep);
-
   uint32_t imageIndex;
 
   auto result = mSwapchain->acquireNextImage(imageIndex);
@@ -225,6 +221,8 @@ void Application::update(float timeStep) {
   }
 
   updateUniformBuffer();
+
+  updateScene(timeStep);
 
   vkAssert(render(imageIndex));
   vkAssert(present(imageIndex));
@@ -321,7 +319,8 @@ VkResult Application::present(const uint32_t imageIndex) {
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores    = &frame.releasedSemaphore;
   // Present swapchain imageIndex
-  return vkQueuePresentKHR(mDevice->getGraphicsQueue(), &presentInfo);
+  vkAssert(vkQueuePresentKHR(mDevice->getGraphicsQueue(), &presentInfo));
+  return vkQueueWaitIdle(mDevice->getGraphicsQueue());
 }
 
 VkDescriptorBufferInfo Application::createDescriptorBufferInfo(VkBuffer buffer, VkDeviceSize range,

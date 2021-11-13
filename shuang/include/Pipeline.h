@@ -12,8 +12,8 @@ public:
            const std::vector<VkDescriptorSetLayout> &descriptorSetLayouts = {});
   ~Pipeline();
 
-  const VkPipeline       &getHandle() const { return mHandle; }
-  const VkPipelineLayout &getLayout() const { return mLayout; }
+  [[nodiscard]] const VkPipeline       &getHandle() const { return mHandle; }
+  [[nodiscard]] const VkPipelineLayout &getLayout() const { return mLayout; }
 
 private:
   VkShaderModule createShaderModule(const char *path);

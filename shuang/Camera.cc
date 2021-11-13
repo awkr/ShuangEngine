@@ -45,7 +45,8 @@ void Camera::handleEvent(const InputEvent &inputEvent) {
 void Camera::update(float timeStep) {}
 
 void Camera::updateViewMatrix() {
-  mViewMatrix = glm::inverse(glm::translate(glm::mat4(1.f), mPosition) * glm::mat4_cast(mRotation));
+  mViewMatrix =
+      glm::inverse(glm::translate(glm::mat4(1.0f), mPosition) * glm::mat4_cast(mRotation));
 }
 
 void Camera::updateProjectionMatrix() {

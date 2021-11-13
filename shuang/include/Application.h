@@ -20,7 +20,9 @@
 
 class Application {
 public:
-  Application();
+  struct Setting {};
+
+  explicit Application(const Setting &setting = {});
   virtual ~Application();
 
   bool setup(bool enableValidation = true);

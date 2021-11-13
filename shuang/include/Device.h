@@ -7,6 +7,7 @@
 #include "PhysicalDevice.h"
 
 class Surface;
+class Queue;
 
 class Device {
 public:
@@ -20,11 +21,15 @@ public:
          const std::shared_ptr<Surface>        &surface);
   ~Device();
 
-  const VkDevice                        &getHandle() const { return mHandle; }
-  const std::shared_ptr<PhysicalDevice> &getPhysicalDevice() const { return mPhysicalDevice; }
-  const QueueFamilyIndices &getQueueFamilyIndices() const { return mQueueFamilyIndices; }
-  const VkQueue            &getGraphicsQueue() const { return mGraphicsQueue; }
-  VkResult                  waitIdle() const { return vkDeviceWaitIdle(mHandle); }
+  [[nodiscard]] const VkDevice                        &getHandle() const { return mHandle; }
+  [[nodiscard]] const std::shared_ptr<PhysicalDevice> &getPhysicalDevice() const {
+    return mPhysicalDevice;
+  }
+  [[nodiscard]] const QueueFamilyIndices &getQueueFamilyIndices() const {
+    return mQueueFamilyIndices;
+  }
+  [[nodiscard]] const VkQueue &getGraphicsQueue() const { return mGraphicsQueue; }
+  [[nodiscard]] VkResult       waitIdle() const { return vkDeviceWaitIdle(mHandle); }
 
   /**
    * @brief Requests a command buffer from the device's command pool

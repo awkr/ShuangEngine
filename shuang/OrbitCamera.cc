@@ -42,16 +42,16 @@ void OrbitCamera::update(float timeStep) {
   //  }
 
   if (mMouseButtonPressed[MouseButton::LEFT]) {
-    rotation.x += mMouseMoveDelta.y;
-    rotation.y += mMouseMoveDelta.x;
+    rotation.x += 0.4f * mMouseMoveDelta.y;
+    rotation.y -= 0.4f * mMouseMoveDelta.x;
   }
 
   rotation *= timeStep;
 
   auto up = glm::vec3(0, -1, 0);
-  if (glm::dot(up, mRotation * up) < 0) {
-    up *= -1;
-  }
+  //  if (glm::dot(up, mRotation * up) < 0) {
+  //    up *= -1;
+  //  }
   const auto right = mRotation * glm::vec3(1, 0, 0);
 
   const auto qy = glm::angleAxis(rotation.y, up);
@@ -66,17 +66,17 @@ void OrbitCamera::update(float timeStep) {
   glm::vec3 movement{0.0f};
 
   if (mKeyPressed[KeyCode::A]) {
-    movement.x += mMoveSpeed;
+    movement.x -= mMoveSpeed;
   }
   if (mKeyPressed[KeyCode::D]) {
-    movement.x -= mMoveSpeed;
+    movement.x += mMoveSpeed;
   }
 
   if (mKeyPressed[KeyCode::W]) {
-    movement.z += mMoveSpeed;
+    movement.z -= mMoveSpeed;
   }
   if (mKeyPressed[KeyCode::S]) {
-    movement.z -= mMoveSpeed;
+    movement.z += mMoveSpeed;
   }
 
   if (mKeyPressed[KeyCode::R]) {
@@ -87,10 +87,10 @@ void OrbitCamera::update(float timeStep) {
   }
 
   if (mMouseButtonPressed[MouseButton::RIGHT]) {
-    movement.x -= 0.5f * mMouseMoveDelta.x;
-    movement.y -= 0.5f * mMouseMoveDelta.y;
+    movement.x -= 0.75f * mMouseMoveDelta.x;
+    movement.y -= 0.75f * mMouseMoveDelta.y;
   }
-  movement.z += 1.2f * mMouseScrollDelta;
+  movement.z -= 1.2f * mMouseScrollDelta;
 
   movement *= timeStep;
 
