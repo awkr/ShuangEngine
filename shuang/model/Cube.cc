@@ -50,7 +50,8 @@ Cube::Cube(const std::shared_ptr<Device> &device) : Model(device) {
                                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                       size, (void *)vertices.data());
   mVertexBuffer = std::make_unique<VertexBuffer>(device, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, size);
+                                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                                 vertices.size(), sizeof(Vertex));
   mVertexBuffer->copy(buf, device->getGraphicsQueue());
 
   // Index buffer

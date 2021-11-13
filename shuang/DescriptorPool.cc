@@ -20,7 +20,7 @@ DescriptorPool::DescriptorPool(const std::shared_ptr<Device> &device, uint32_t d
   descriptorPoolCreateInfo.pPoolSizes    = descriptorPoolSizes.data();
   descriptorPoolCreateInfo.maxSets       = maxSets;
 
-  vkAssert(
+  vkOK(
       vkCreateDescriptorPool(device->getHandle(), &descriptorPoolCreateInfo, nullptr, &mHandle));
 }
 

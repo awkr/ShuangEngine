@@ -9,13 +9,12 @@ DescriptorSet::DescriptorSet(const std::shared_ptr<Device>            &device,
                              uint32_t                                  descriptorSetCount,
                              const std::vector<VkDescriptorSetLayout> &descriptorSetLayouts,
                              const VkDescriptorBufferInfo             &bufferInfo) {
-  VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-  descriptorSetAllocateInfo.descriptorPool     = pool->getHandle();
-  descriptorSetAllocateInfo.descriptorSetCount = descriptorSetCount;
-  descriptorSetAllocateInfo.pSetLayouts        = descriptorSetLayouts.data();
+  VkDescriptorSetAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+  allocateInfo.descriptorPool     = pool->getHandle();
+  allocateInfo.descriptorSetCount = descriptorSetCount;
+  allocateInfo.pSetLayouts        = descriptorSetLayouts.data();
 
-  vkAssert(vkAllocateDescriptorSets(device->getHandle(), &descriptorSetAllocateInfo, &mHandle));
+  vkOK(vkAllocateDescriptorSets(device->getHandle(), &allocateInfo, &mHandle));
 
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
       // Binding 0 : vertex shader uniform buffer

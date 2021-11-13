@@ -14,7 +14,11 @@ public:
 };
 
 int main() {
-  auto example = std::make_unique<Example>();
-  example->setup();
-  example->mainLoop();
+  try {
+    auto example = std::make_unique<Example>();
+    example->setup();
+    example->mainLoop();
+  } catch (const std::exception &e) {
+    log_error("exception caught: {}", e.what());
+  }
 }

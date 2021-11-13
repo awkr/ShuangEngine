@@ -69,7 +69,7 @@ Instance::Instance(const char *applicationName, const std::vector<const char *> 
     }
   }
 
-  vkAssert(vkCreateInstance(&instanceCreateInfo, nullptr, &mHandle));
+  vkOK(vkCreateInstance(&instanceCreateInfo, nullptr, &mHandle));
 
   if (enableValidation) {
     VkDebugReportFlagsEXT reportFlags = VK_DEBUG_REPORT_WARNING_BIT_EXT |

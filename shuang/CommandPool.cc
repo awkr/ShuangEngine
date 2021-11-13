@@ -9,7 +9,7 @@ CommandPool::CommandPool(const Device &device, uint32_t queueFamilyIndex) : mDev
   commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
   commandPoolCreateInfo.flags            = commandPoolCreateFlags;
 
-  vkAssert(vkCreateCommandPool(device.getHandle(), &commandPoolCreateInfo, nullptr, &mHandle));
+  vkOK(vkCreateCommandPool(device.getHandle(), &commandPoolCreateInfo, nullptr, &mHandle));
 }
 
 CommandPool::~CommandPool() {

@@ -11,7 +11,7 @@ Buffer::Buffer(const std::shared_ptr<Device> &device, VkBufferUsageFlags usage,
   bufferCreateInfo.usage       = usage;
   bufferCreateInfo.size        = size;
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  vkAssert(vkCreateBuffer(device->getHandle(), &bufferCreateInfo, nullptr, &mHandle));
+  vkOK(vkCreateBuffer(device->getHandle(), &bufferCreateInfo, nullptr, &mHandle));
 
   // Create the memory backing up the buffer handle
   VkMemoryRequirements memoryRequirements;
@@ -22,12 +22,12 @@ Buffer::Buffer(const std::shared_ptr<Device> &device, VkBufferUsageFlags usage,
   // Find a memory type index that fits the properties of the buffer
   memoryAllocateInfo.memoryTypeIndex =
       device->getPhysicalDevice()->getMemoryType(memoryRequirements.memoryTypeBits, properties);
-  vkAssert(vkAllocateMemory(device->getHandle(), &memoryAllocateInfo, nullptr, &mMemory));
+  vkOK(vkAllocateMemory(device->getHandle(), &memoryAllocateInfo, nullptr, &mMemory));
 
   // If a pointer to the buffer data has been passed, map the buffer and copy data
   if (data != nullptr) {
     void *mapped;
-    vkAssert(vkMapMemory(device->getHandle(), mMemory, 0, size, 0, &mapped));
+    vkOK(vkMapMemory(device->getHandle(), mMemory, 0, size, 0, &mapped));
     memcpy(mapped, data, static_cast<size_t>(size));
     // If host coherency hasn't been requested, do a manual flush to make writes visible
     if ((properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
@@ -41,7 +41,7 @@ Buffer::Buffer(const std::shared_ptr<Device> &device, VkBufferUsageFlags usage,
   }
 
   // Attach the memory to the buffer object
-  vkAssert(vkBindBufferMemory(device->getHandle(), mHandle, mMemory, 0));
+  vkOK(vkBindBufferMemory(device->getHandle(), mHandle, mMemory, 0));
 }
 
 Buffer::~Buffer() {
@@ -65,7 +65,7 @@ void Buffer::copy(const std::shared_ptr<Buffer> &src, VkQueue queue, VkBufferCop
 
 void Buffer::copy(void *data, size_t size) {
   void *mapped;
-  vkAssert(vkMapMemory(mDevice->getHandle(), mMemory, 0, size, 0, &mapped));
+  vkOK(vkMapMemory(mDevice->getHandle(), mMemory, 0, size, 0, &mapped));
   memcpy(mapped, data, size);
   vkUnmapMemory(mDevice->getHandle(), mMemory);
 }

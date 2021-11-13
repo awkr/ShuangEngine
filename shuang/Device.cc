@@ -24,7 +24,7 @@ Device::Device(const std::shared_ptr<PhysicalDevice> &physicalDevice,
                                        nullptr);
   if (extensionCount > 0) {
     std::vector<VkExtensionProperties> extensions(extensionCount);
-    vkAssert(vkEnumerateDeviceExtensionProperties(physicalDevice->getHandle(), nullptr,
+    vkOK(vkEnumerateDeviceExtensionProperties(physicalDevice->getHandle(), nullptr,
                                                   &extensionCount, extensions.data()));
     //    log_info("Supported device extensions: {}", extensionCount);
     for (const auto &extension : extensions) {
@@ -66,8 +66,8 @@ Device::Device(const std::shared_ptr<PhysicalDevice> &physicalDevice,
   queueCreateInfos.push_back(queueCreateInfo);
 
   std::vector<const char *> deviceExtensions{
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-      VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
+      /* VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME, */
   };
 
   // Check extensions supportability
@@ -77,14 +77,18 @@ Device::Device(const std::shared_ptr<PhysicalDevice> &physicalDevice,
     }
   }
 
-  VkDeviceCreateInfo deviceCreateInfo      = {};
-  deviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extendedDynamicStateFeatures{
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT};
+  extendedDynamicStateFeatures.extendedDynamicState = VK_TRUE;
+
+  VkDeviceCreateInfo deviceCreateInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
   deviceCreateInfo.queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size());
   deviceCreateInfo.pQueueCreateInfos       = queueCreateInfos.data();
   deviceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size());
   deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+  deviceCreateInfo.pNext                   = &extendedDynamicStateFeatures;
 
-  vkAssert(vkCreateDevice(physicalDevice->getHandle(), &deviceCreateInfo, nullptr, &mHandle));
+  vkOK(vkCreateDevice(physicalDevice->getHandle(), &deviceCreateInfo, nullptr, &mHandle));
 
   vkGetDeviceQueue(mHandle, mQueueFamilyIndices.graphics, 0, &mGraphicsQueue);
 
@@ -105,13 +109,13 @@ VkCommandBuffer Device::createCommandBuffer(VkCommandBufferLevel level, bool beg
   commandBufferAllocateInfo.commandBufferCount = 1;
 
   VkCommandBuffer commandBuffer;
-  vkAssert(vkAllocateCommandBuffers(mHandle, &commandBufferAllocateInfo, &commandBuffer));
+  vkOK(vkAllocateCommandBuffers(mHandle, &commandBufferAllocateInfo, &commandBuffer));
 
   // If requested, also start recording for the new command buffer
   if (begin) {
     VkCommandBufferBeginInfo commandBufferBeginInfo{};
     commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    vkAssert(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
+    vkOK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
   }
 
   return commandBuffer;
@@ -119,7 +123,7 @@ VkCommandBuffer Device::createCommandBuffer(VkCommandBufferLevel level, bool beg
 
 void Device::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, bool free,
                                 VkSemaphore signalSemaphore) {
-  vkAssert(vkEndCommandBuffer(commandBuffer));
+  vkOK(vkEndCommandBuffer(commandBuffer));
 
   VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
   submitInfo.commandBufferCount = 1;
@@ -132,12 +136,12 @@ void Device::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, bo
   // Create fence to ensure that the command buffer has finished executing
   VkFenceCreateInfo fenceCreateInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
   VkFence           fence;
-  vkAssert(vkCreateFence(mHandle, &fenceCreateInfo, nullptr, &fence));
+  vkOK(vkCreateFence(mHandle, &fenceCreateInfo, nullptr, &fence));
 
   // Submit to the queue
-  vkAssert(vkQueueSubmit(queue, 1, &submitInfo, fence));
+  vkOK(vkQueueSubmit(queue, 1, &submitInfo, fence));
   // Wait for the fence to signal that command buffer has finished executing
-  vkAssert(vkWaitForFences(mHandle, 1, &fence, VK_TRUE, FENCE_DEFAULT_TIMEOUT));
+  vkOK(vkWaitForFences(mHandle, 1, &fence, VK_TRUE, FENCE_DEFAULT_TIMEOUT));
 
   vkDestroyFence(mHandle, fence, nullptr);
 

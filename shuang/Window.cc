@@ -173,7 +173,7 @@ void Window::pollEvents() { glfwPollEvents(); }
 
 VkSurfaceKHR Window::createSurface(const VkInstance instance) const {
   VkSurfaceKHR surface;
-  vkAssert(glfwCreateWindowSurface(instance, mHandle, nullptr, &surface));
+  vkOK(glfwCreateWindowSurface(instance, mHandle, nullptr, &surface));
   return surface;
 }
 

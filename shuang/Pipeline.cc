@@ -15,7 +15,7 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
   pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts.data();
   pipelineLayoutCreateInfo.setLayoutCount = descriptorSetLayouts.size();
-  vkAssert(
+  vkOK(
       vkCreatePipelineLayout(mDevice->getHandle(), &pipelineLayoutCreateInfo, nullptr, &mLayout));
 
   // Vertex binding and attributes
@@ -43,7 +43,8 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
   // Specify we will use triangle lists to draw geometry.
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
-  inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  //  inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 
   // Specify rasterization state.
   VkPipelineRasterizationStateCreateInfo rasterizationState{
@@ -85,9 +86,9 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
   multisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-  // Specify that these states will be dynamicStateCreateInfo, i.e. not part of pipeline state
-  // object.
-  std::array<VkDynamicState, 2> dynamicStates{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+  // Specify that these states will be dynamic, i.e. not part of pipeline state object.
+  std::array<VkDynamicState, 2> dynamicStates{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                              /* VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT */};
 
   VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
@@ -125,7 +126,7 @@ Pipeline::Pipeline(const std::shared_ptr<Device>            &device,
   pipelineCreateInfo.renderPass = renderPass->getHandle();
   pipelineCreateInfo.layout     = mLayout;
 
-  vkAssert(vkCreateGraphicsPipelines(device->getHandle(), VK_NULL_HANDLE, 1, &pipelineCreateInfo,
+  vkOK(vkCreateGraphicsPipelines(device->getHandle(), VK_NULL_HANDLE, 1, &pipelineCreateInfo,
                                      nullptr, &mHandle));
 
   // Pipeline is baked, we can delete the shader modules now.
@@ -147,7 +148,7 @@ VkShaderModule Pipeline::createShaderModule(const char *path) {
   shaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t *>(source.data());
 
   VkShaderModule shaderModule;
-  vkAssert(
+  vkOK(
       vkCreateShaderModule(mDevice->getHandle(), &shaderModuleCreateInfo, nullptr, &shaderModule));
   return shaderModule;
 }

@@ -95,7 +95,7 @@ RenderPass::RenderPass(const std::shared_ptr<Device> &device, VkFormat imageForm
   renderPassCreateInfo.dependencyCount        = dependencies.size();
   renderPassCreateInfo.pDependencies          = dependencies.data();
 
-  vkAssert(vkCreateRenderPass(device->getHandle(), &renderPassCreateInfo, nullptr, &mHandle));
+  vkOK(vkCreateRenderPass(device->getHandle(), &renderPassCreateInfo, nullptr, &mHandle));
 }
 
 RenderPass::~RenderPass() {

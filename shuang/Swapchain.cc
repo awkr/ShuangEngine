@@ -8,7 +8,7 @@
 Swapchain::Swapchain(const std::shared_ptr<Device> &device, const std::shared_ptr<Surface> &surface)
     : mDevice{device} {
   VkSurfaceCapabilitiesKHR capabilities;
-  vkAssert(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->getPhysicalDevice()->getHandle(),
+  vkOK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->getPhysicalDevice()->getHandle(),
                                                      surface->getHandle(), &capabilities));
 
   uint32_t surfaceFormatCount;
@@ -114,11 +114,11 @@ Swapchain::Swapchain(const std::shared_ptr<Device> &device, const std::shared_pt
   swapchainCreateInfo.presentMode        = presentMode;
   swapchainCreateInfo.clipped            = true;
 
-  vkAssert(vkCreateSwapchainKHR(mDevice->getHandle(), &swapchainCreateInfo, nullptr, &mHandle));
+  vkOK(vkCreateSwapchainKHR(mDevice->getHandle(), &swapchainCreateInfo, nullptr, &mHandle));
 
-  vkAssert(vkGetSwapchainImagesKHR(mDevice->getHandle(), mHandle, &mImageCount, nullptr));
+  vkOK(vkGetSwapchainImagesKHR(mDevice->getHandle(), mHandle, &mImageCount, nullptr));
   mImages.resize(mImageCount);
-  vkAssert(vkGetSwapchainImagesKHR(mDevice->getHandle(), mHandle, &mImageCount, mImages.data()));
+  vkOK(vkGetSwapchainImagesKHR(mDevice->getHandle(), mHandle, &mImageCount, mImages.data()));
 
   for (size_t i = 0; i < mImageCount; ++i) {
     // Create an image view which we can render into.
@@ -135,7 +135,7 @@ Swapchain::Swapchain(const std::shared_ptr<Device> &device, const std::shared_pt
     imageViewCreateInfo.components.a                = VK_COMPONENT_SWIZZLE_A;
 
     VkImageView imageView;
-    vkAssert(vkCreateImageView(mDevice->getHandle(), &imageViewCreateInfo, nullptr, &imageView));
+    vkOK(vkCreateImageView(mDevice->getHandle(), &imageViewCreateInfo, nullptr, &imageView));
 
     mImageViews.push_back(imageView);
   }
@@ -186,13 +186,13 @@ Swapchain::~Swapchain() {
 void Swapchain::initFrame(Frame &frame) {
   VkFenceCreateInfo fenceCreateInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
   fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-  vkAssert(
+  vkOK(
       vkCreateFence(mDevice->getHandle(), &fenceCreateInfo, nullptr, &frame.queueSubmittedFence));
 
   VkCommandPoolCreateInfo commandPoolCreateInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
   commandPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
   commandPoolCreateInfo.queueFamilyIndex = mDevice->getQueueFamilyIndices().graphics;
-  vkAssert(vkCreateCommandPool(mDevice->getHandle(), &commandPoolCreateInfo, nullptr,
+  vkOK(vkCreateCommandPool(mDevice->getHandle(), &commandPoolCreateInfo, nullptr,
                                &frame.primaryCommandPool));
 
   VkCommandBufferAllocateInfo commandBufferAllocateInfo{
@@ -200,7 +200,7 @@ void Swapchain::initFrame(Frame &frame) {
   commandBufferAllocateInfo.commandPool        = frame.primaryCommandPool;
   commandBufferAllocateInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   commandBufferAllocateInfo.commandBufferCount = 1;
-  vkAssert(vkAllocateCommandBuffers(mDevice->getHandle(), &commandBufferAllocateInfo,
+  vkOK(vkAllocateCommandBuffers(mDevice->getHandle(), &commandBufferAllocateInfo,
                                     &frame.primaryCommandBuffer));
 }
 
@@ -221,7 +221,7 @@ void Swapchain::createFramebuffers(const std::shared_ptr<RenderPass> &renderPass
     attachments[0] = imageView;
 
     VkFramebuffer framebuffer;
-    vkAssert(
+    vkOK(
         vkCreateFramebuffer(mDevice->getHandle(), &framebufferCreateInfo, nullptr, &framebuffer));
     mFramebuffers.push_back(framebuffer);
   }
@@ -239,7 +239,7 @@ void Swapchain::createDepthStencil() {
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
-  vkAssert(vkCreateImage(mDevice->getHandle(), &imageCreateInfo, nullptr, &mDepthStencil.image));
+  vkOK(vkCreateImage(mDevice->getHandle(), &imageCreateInfo, nullptr, &mDepthStencil.image));
 
   VkMemoryRequirements memoryRequirements{};
   vkGetImageMemoryRequirements(mDevice->getHandle(), mDepthStencil.image, &memoryRequirements);
@@ -248,9 +248,9 @@ void Swapchain::createDepthStencil() {
   memoryAllocation.allocationSize  = memoryRequirements.size;
   memoryAllocation.memoryTypeIndex = mDevice->getPhysicalDevice()->getMemoryType(
       memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  vkAssert(
+  vkOK(
       vkAllocateMemory(mDevice->getHandle(), &memoryAllocation, nullptr, &mDepthStencil.memory));
-  vkAssert(vkBindImageMemory(mDevice->getHandle(), mDepthStencil.image, mDepthStencil.memory, 0));
+  vkOK(vkBindImageMemory(mDevice->getHandle(), mDepthStencil.image, mDepthStencil.memory, 0));
 
   VkImageViewCreateInfo imageViewCreateInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
   imageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
@@ -266,7 +266,7 @@ void Swapchain::createDepthStencil() {
   if (mDepthFormat >= VK_FORMAT_D16_UNORM_S8_UINT) {
     imageViewCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
   }
-  vkAssert(
+  vkOK(
       vkCreateImageView(mDevice->getHandle(), &imageViewCreateInfo, nullptr, &mDepthStencil.view));
 }
 
@@ -284,7 +284,7 @@ VkResult Swapchain::acquireNextImage(uint32_t &imageIndex) {
   VkSemaphore semaphore;
   if (mSemaphorePool.empty()) {
     VkSemaphoreCreateInfo semaphoreCreateInfo = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-    vkAssert(vkCreateSemaphore(mDevice->getHandle(), &semaphoreCreateInfo, nullptr, &semaphore));
+    vkOK(vkCreateSemaphore(mDevice->getHandle(), &semaphoreCreateInfo, nullptr, &semaphore));
   } else {
     semaphore = mSemaphorePool.back();
     mSemaphorePool.pop_back();

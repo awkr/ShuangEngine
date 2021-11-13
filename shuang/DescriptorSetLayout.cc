@@ -4,20 +4,15 @@
 #include "Macros.h"
 
 DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device> &device) : mDevice{device} {
-  std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings = {
-      // bind 0: vertex shader uniform buffer
+  std::vector<VkDescriptorSetLayoutBinding> bindings = {
       createDescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                        VK_SHADER_STAGE_VERTEX_BIT, 0),
   };
 
-  VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
-  descriptorSetLayoutCreateInfo.sType     = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  descriptorSetLayoutCreateInfo.pBindings = descriptorSetLayoutBindings.data();
-  descriptorSetLayoutCreateInfo.bindingCount =
-      static_cast<uint32_t>(descriptorSetLayoutBindings.size());
-
-  vkAssert(vkCreateDescriptorSetLayout(device->getHandle(), &descriptorSetLayoutCreateInfo, nullptr,
-                                       &mHandle));
+  VkDescriptorSetLayoutCreateInfo createInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+  createInfo.pBindings    = bindings.data();
+  createInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+  vkOK(vkCreateDescriptorSetLayout(device->getHandle(), &createInfo, nullptr, &mHandle));
 }
 
 DescriptorSetLayout::~DescriptorSetLayout() {
