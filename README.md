@@ -27,6 +27,7 @@ but needs more refresh time when reconfiguring project.
 2. glfw ( tag: 3.3.4 )
 3. spdlog ( tag: v1.9.2 )
 4. fmt ( tag: 8.0.1 )
+5. imgui ( tag: v1.85 )
 
 # [TODO]
 
