@@ -1,6 +1,6 @@
 #include "PhysicalDevice.h"
 #include "Instance.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Macros.h"
 
 PhysicalDevice::PhysicalDevice(const std::shared_ptr<Instance> &instance) {

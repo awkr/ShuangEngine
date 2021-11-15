@@ -1,6 +1,6 @@
 #include "model/Cube.h"
 #include "Device.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Vertex.h"
 
 Cube::Cube(const std::shared_ptr<Device> &device) : Model(device) {

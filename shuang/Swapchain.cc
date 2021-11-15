@@ -1,6 +1,6 @@
 #include "Swapchain.h"
 #include "Device.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Macros.h"
 #include "RenderPass.h"
 #include "Surface.h"

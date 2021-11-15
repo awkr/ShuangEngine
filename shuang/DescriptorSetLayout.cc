@@ -1,6 +1,6 @@
 #include "DescriptorSetLayout.h"
 #include "Device.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Macros.h"
 
 DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device> &device) : mDevice{device} {

@@ -1,6 +1,6 @@
 #include "model/Triangle.h"
 #include "Device.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Vertex.h"
 
 Triangle::Triangle(const std::shared_ptr<Device> &device) : Model(device) {

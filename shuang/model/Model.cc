@@ -1,6 +1,6 @@
 #include "model/Model.h"
 #include "Device.h"
-#include "Logger.h"
+#include "Log.h"
 
 Model::Model(const std::shared_ptr<Device> &device) : mDevice{device} {}
 

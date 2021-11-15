@@ -8,7 +8,7 @@
 #include "IndexBuffer.h"
 #include "InputEvent.h"
 #include "Instance.h"
-#include "Logger.h"
+#include "Log.h"
 #include "PhysicalDevice.h"
 #include "Pipeline.h"
 #include "RenderPass.h"

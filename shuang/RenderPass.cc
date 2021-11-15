@@ -1,6 +1,6 @@
 #include "RenderPass.h"
 #include "Device.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Macros.h"
 
 RenderPass::RenderPass(const std::shared_ptr<Device> &device, VkFormat imageFormat,

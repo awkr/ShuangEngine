@@ -1,6 +1,6 @@
 #include "FreeCamera.h"
 #include "InputEvent.h"
-#include "Logger.h"
+#include "Log.h"
 
 #include <glm/gtx/string_cast.hpp>
 

@@ -1,5 +1,5 @@
 #include "Instance.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Macros.h"
 #include "Validation.h"
 

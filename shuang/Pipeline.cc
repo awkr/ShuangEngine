@@ -1,7 +1,7 @@
 #include "Pipeline.h"
 #include "Device.h"
 #include "FileSystem.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Macros.h"
 #include "RenderPass.h"
 #include "Vertex.h"

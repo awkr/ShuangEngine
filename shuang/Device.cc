@@ -1,5 +1,5 @@
 #include "Device.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Macros.h"
 #include "Queue.h"
 #include "Surface.h"

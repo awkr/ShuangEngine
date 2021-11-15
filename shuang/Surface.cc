@@ -1,6 +1,6 @@
 #include "Surface.h"
 #include "Instance.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Window.h"
 
 Surface::Surface(const std::shared_ptr<Instance> &instance, const std::shared_ptr<Window> &window)
